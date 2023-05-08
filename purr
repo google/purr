@@ -830,7 +830,7 @@ cmd_clipboard=(
         "lines=\"{+}\";"
         'eval "line_array=($lines)";'
         'new_line_array=$(printf "%s\n" "${line_array[@]}");'
-        "$(which purr_pbcopy) \"\$new_line_array[@]\" > $target_tty"
+        "$(which pbcopy_purr) \"\$new_line_array[@]\" > $target_tty"
     ')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-y:$cmd_clipboard")
