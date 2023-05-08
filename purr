@@ -1,0 +1,1173 @@
+#!/bin/zsh
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Error code bands:
+# 50-59: Irrecoverable environment-based error.
+#   51 - Shell does not support purr.
+# 60-69: Irrecoverable ADB-related error.
+#   61 - Could not get a serial number.
+
+# Queries the user to choose between all connected adb devices.
+# Output: Serial number of the chosen adb device, to be used in adb -s $(pick_serial).
+pick_serial() {
+
+    # Checks if we want to return just the $ANDROID_SERIAL serial.
+    if [ ! -z $ANDROID_SERIAL ]; then
+        __pick_serial_wait $ANDROID_SERIAL
+        echo $ANDROID_SERIAL
+        return 0
+    fi
+
+    # Check if any ADB devices are found.
+    local adb_devices=""
+    local device_count=""
+    while [ -z $adb_devices ]; do
+        __pick_serial_wait
+
+        adb_devices=$(adb devices | tail -n +2 | sed '/^\s*$/d' | sort)
+        device_count=$(echo $adb_devices | /usr/bin/wc -l)
+
+        # Checks how many devices are in a non-connected state.
+        local disconnected_devices=$(/usr/bin/grep ".*offline.*" <<<$adb_devices | sort)
+        local disconnected_count=$(/usr/bin/grep -c ".*offline.*" <<<$adb_devices | sort)
+
+        # Checks whether there are any devices left that can be connected to.
+        if [ $disconnected_count -eq $device_count ]; then
+            echo "All available devices are disconnected. Sleeping..." >> /dev/tty
+            sleep 2
+            __pick_serial_wait
+
+            adb_devices=""
+            device_count=""
+        elif [ $disconnected_count -ne 0 ]; then
+            echo "Skipped offline devices:" >> /dev/tty
+            echo $disconnected_devices >> /dev/tty
+            adb_devices=$(/usr/bin/grep -v ".*offline.*" <<<$adb_devices | sort)
+        fi
+    done
+
+    # Check if only one device is found. If it is, we'll just use it.
+    if [ $device_count -eq 1 ]; then
+        local stripped_device=$(echo "$adb_devices" | xargs)
+    else
+        if command -v rg &>/dev/null; then
+            local stripped_device=$(FZF_DEFAULT_COMMAND="echo \"$adb_devices\"" fzf_purr $fzfpnh "--height=25%" --preview-window=right,50%,wrap \
+                "--preview=adb -s \$(cut -f1 <<< {}) shell getprop | /usr/bin/rg '(ro.bootimage.build.date]|ro.product.name|ro.bootimage.build.version.incremental])' | awk -F ']:' '{print \$2}' | sed 's/]//g' | sed 's/\[//g' " | xargs)
+        else
+            local stripped_device=$(FZF_DEFAULT_COMMAND="echo \"$adb_devices\"" fzf_purr $fzfpnh "--height=25%" | xargs)
+        fi
+    fi
+
+    # If the user exits fzf without picking.
+    if [ -z $stripped_device ]; then
+        echo "No serial number selected."
+        return 18
+    fi
+
+    # Cuts the serial down to just the number.
+    echo "$(cut -d' ' -f1 <<<$stripped_device)" # Grab the serial from selection.
+}
+
+__pick_serial_wait() {
+    local serial=$1
+
+    # See if any devices are immediately connected before printing a connect message.
+    if [ -z $serial ]; then
+        /usr/bin/timeout 0.2 adb wait-for-device 2> /dev/null
+    else
+        /usr/bin/timeout 0.2 adb -s $serial wait-for-device 2> /dev/null
+    fi
+    
+    # If we can't find any immediate connections, go into a longer waiting period.
+    if [ $? -eq 124 ]; then
+        if [ -z $serial ]; then
+            echo "Waiting on a device to connect..." > /dev/tty
+            adb wait-for-device
+        else
+            echo "Waiting for $serial to connect..." > /dev/tty
+            adb -s $serial wait-for-device
+        fi
+        echo "Device connected." > /dev/tty
+    fi
+}
+
+__purr_create_files() {
+   local dir_name=$1
+
+    if [ -z $dir_name ]; then
+        echo "Can't parse directory name."
+        exit 1
+    fi
+
+    # File to print input into.
+    purr_input_cache="$dir_name/purr-input-cache.purr"
+    /usr/bin/touch $purr_input_cache
+
+    # File to print input into.
+    purr_instruction_cache="$dir_name/instructions.purr"
+    /usr/bin/touch $purr_instruction_cache
+
+    # File to use for editor input.
+    purr_editor_input_cache="$dir_name/editor-input-cache.purr"
+    /usr/bin/touch $purr_editor_input_cache
+
+    # File to use to keep track of input stream.
+    purr_input_stream_cache="$dir_name/input-stream.purr"
+    /usr/bin/touch $purr_input_stream_cache
+
+    # File to use to keep track of the stream header message.
+    purr_stream_header_cache="$dir_name/stream-header.purr"
+    /usr/bin/touch $purr_stream_header_cache
+
+    # File to use to keep track of the query during aborting commands.
+    purr_query_cache="$dir_name/query-cache.purr"
+    /usr/bin/touch $purr_query_cache
+
+    # File to use to keep track of the sort header message.
+    purr_sort_header_cache="$dir_name/sort-header.purr"
+    /usr/bin/touch $purr_sort_header_cache
+
+    # File to use to keep track of whether scroll lock is on.
+    purr_slock_cache="$dir_name/scroll-lock-header.purr"
+    /usr/bin/touch $purr_slock_cache
+
+    # File to use to keep track of the serial number.
+    purr_serial_cache="$dir_name/serial-cache.purr"
+    /usr/bin/touch $purr_serial_cache
+
+    # File to use to keep track of the state of the device connection.
+    purr_connection_state_cache="$dir_name/connection-state.purr"
+    /usr/bin/touch $purr_connection_state_cache
+
+    # File to communicate with the background handler.
+    purr_background_handler_cache="$dir_name/background-handler-IO.purr"
+    /usr/bin/touch $purr_background_handler_cache
+
+    # File to communicate what the accept command intent was.
+    purr_accept_command_cache="$dir_name/purr_accept_command_cache.purr"
+    /usr/bin/touch $purr_accept_command_cache
+
+    # File to keep track of what time we want to start at.
+    purr_time_start_cache="$dir_name/purr_time_start_cache.purr"
+    /usr/bin/touch $purr_time_start_cache
+
+    # Files to input cache the streams into.
+    purr_error_input_cache="$dir_name/error-input-cache.purr"
+    purr_warning_input_cache="$dir_name/warning-input-cache.purr"
+    purr_info_input_cache="$dir_name/info-input-cache.purr"
+    purr_verbose_input_cache="$dir_name/verbose-input-cache.purr"
+
+    # File to use for purr history. This file is not removed between sessions.
+    purr_history_cache="/var/tmp/history.purr"
+    /usr/bin/touch $purr_history_cache
+
+    # File to use for the purr history counter.
+    purr_history_counter_cache="$dir_name/history-counter.purr"
+    /usr/bin/touch $purr_history_counter_cache
+
+    # File to use for purr history location.
+    purr_history_pointer_cache="$dir_name/history-pointer.purr"
+    /usr/bin/touch $purr_history_pointer_cache
+
+    # We'll use this to cache the result of ADB commands.
+    purr_adb_cache="$dir_name/adb-cache.purr"
+    /usr/bin/touch $purr_adb_cache
+}
+
+# Ensures the user's environment can support running purr.
+__purr_check_env() {
+
+    # Ensures that the calling shell in zsh.
+    if [ -n "$ZSH_VERSION" ]; then
+        : # Left blank for clarity.
+    elif [ -n "$BASH_VERSION" ]; then
+        echo "Bash detected. Purr will malfunction. Aborting."
+        return 51
+    else
+        echo "Unsure of shell. Purr may malfunction. Aborting."
+        return 51
+    fi
+
+    # Ensures that the user has adb installed.
+    if ! type adb &> /dev/null; then
+        echo "You don't have adb installed."
+        echo "Running: sudo apt-get install adb"
+        /usr/bin/sudo apt-get install adb
+        return 52
+    fi
+}
+
+# Writes the instruction file which will be displayed in the 
+# instruction header when purr starts.
+__purr_print_instructions() {
+    local purr_instruction_cache=$1
+
+    echo "\x1b[1;1m\x1b[1;4mInstructions\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-p:\x1b[1;0m Toggle this preview window on and off" >> $purr_instruction_cache
+    echo "  \x1b[1;1mShift-up/down:\x1b[1;0m Scroll up/down in the instruction window" >> $purr_instruction_cache
+    echo "  \x1b[1;1mEscape:\x1b[1;0m Exit" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mStream Modes\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF1/2/3/4:\x1b[1;0m Show Error/Warning/Info/Verbose streams, respectively" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF5:\x1b[1;0m Show the serial selection menu" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF6:\x1b[1;0m Enter ADB command mode" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-r:\x1b[1;0m Show the history menu" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mPreview\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF7:\x1b[1;0m Shows the instruction preview" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF9:\x1b[1;0m Shows line context in the current stream" >> $purr_instruction_cache
+    echo "  \x1b[1;1mF10:\x1b[1;0m Shows line context in the verbose stream" >> $purr_instruction_cache
+    echo "  \x1b[1;1mShift-up/down:\x1b[1;0m Scroll up/down in the preview window" >> $purr_instruction_cache
+    echo "  \x1b[1;1mHome/End:\x1b[1;0m Scroll one page in the preview window" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mNavigation\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-s:\x1b[1;0m Enable Scroll Lock" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-j:\x1b[1;0m Toggle between Chronological and Relevance sort" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-f:\x1b[1;0m Go to selected line." >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mADB Controls\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-w:\x1b[1;0m Issues 'adb logcat -c' to wipe logs" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-t:\x1b[1;0m Trims logs to the selected entries timestamp" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-alt-t:\x1b[1;0m Removes any applied trim" >> $purr_instruction_cache
+    echo "  \x1b[1;1mEnter:\x1b[1;0m  In ADB command mode, execute the current query as:" >> $purr_instruction_cache
+    echo "          'adb -s \$serial shell \$query'" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mHistory\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mAlt-shift-up/down:\x1b[1;0m Scroll up/down through history items" >> $purr_instruction_cache
+    echo "  \x1b[1;1mEnter:\x1b[1;0m Select an item from the history menu" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mSerial\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mEnter:\x1b[1;0m Select an item from the serial menu" >> $purr_instruction_cache
+    echo "" >> $purr_instruction_cache
+    echo "\x1b[1;1m\x1b[1;4mMisc.\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-v:\x1b[1;0m Open selected line in text editor" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-y:\x1b[1;0m Copy selected lines." >> $purr_instruction_cache
+    echo "  \x1b[1;1mTab:\x1b[1;0m Select multiple lines." >> $purr_instruction_cache
+}
+
+__purr_cleanup() {
+    local dir_name=$1
+
+    # Send a message to the background threads that they need to die.
+    if [ -f $purr_background_handler_cache ]; then
+        echo "cleanup" >> $purr_background_handler_cache && sleep 0.30
+    fi
+
+    # Delete all of the cached state files.
+    if [ -d $dir_name ]; then
+        /usr/bin/rm -r $dir_name
+    fi
+}
+
+# The background handler is responsible for starting and killing
+# the stream threads. It uses the purr_background_handler_cache
+# as a one-way communication between the core process and itself,
+# and then handles asynchronous processes related to the stream threads.
+__purr_background_handler() {
+   __purr_start_streams
+
+   while read line; do
+      if [ $line = "stop" ]; then
+        __purr_cleanup_streams
+      elif [ $line = "start" ]; then
+         __purr_start_streams
+         sleep 0.5
+      elif [ $line = "cleanup" ]; then
+         __purr_cleanup_streams
+         exit 0
+      fi
+   done < <(/usr/bin/tail -f $purr_background_handler_cache 2> /dev/null)
+}
+
+# Spawns four threads that will simultaneously load the four streams from
+# adb. These threads will stay alive until killed by the background handler.
+__purr_start_streams() {
+    __purr_stream_background_file $purr_error_input_cache "*:E" $purr_serial_cache &
+    __purr_stream_background_file $purr_warning_input_cache "*:W" $purr_serial_cache &
+    __purr_stream_background_file $purr_info_input_cache "*:I" $purr_serial_cache &
+    __purr_stream_background_file $purr_verbose_input_cache "*:V" $purr_serial_cache &
+}
+
+# We can just kill the stream threads; they only interact with
+# the stream file, so we don't care about is happening when they die.
+__purr_cleanup_streams() {
+    kill ${${(v)jobstates##*:*:}%=*}
+    sleep 0.5
+    /usr/bin/rm $purr_error_input_cache &> /dev/null
+    /usr/bin/rm $purr_warning_input_cache &> /dev/null
+    /usr/bin/rm $purr_info_input_cache &> /dev/null
+    /usr/bin/rm $purr_verbose_input_cache &> /dev/null
+}
+
+# The function that runs the stream threads. Each should run an
+# adb process that feeds information into the given file. We also
+# want to make sure that only one thread is handling shared logic,
+# so the verbose thread is responsible for this, as it has the most
+# context. Since these threads are the only ones who directly interact
+# with adb logcat, they are also responsible for monitoring the connection
+# state of the device and ensuring they can cleanly resume if we lose
+# the device.
+__purr_stream_background_file() {
+    local stream_file=$1
+    local stream_command=$2
+    local purr_serial_cache=$3
+
+    # We only want the verbose background stream to perform certain actions.
+    if grep -q "verbose" <<< "$stream_file"; then
+        local am_verbose="true"
+    else
+        local am_verbose="false"
+    fi
+
+    touch $stream_file
+
+    # We don't know anything about the connection yet, even
+    # though we should be in a good state.
+    conn_status="unknown"
+
+    while true; do
+
+        # Make sure we have the most up to date serial.
+        serial=$(cat $purr_serial_cache 2> /dev/null)
+        if [ -z $serial ]; then
+            exit
+        fi
+
+        # If we disconnected, we want to make sure that the device is still offline.
+        if [[ $conn_status = "potential" ]]; then
+            /usr/bin/timeout 2 adb -s $serial wait-for-device &> /dev/null
+
+            # The device seems to have found itself, we can just reconnect.
+            if [ $? -eq 0 ]; then
+                echo "\x1b[1;36mPURR STATUS: Device Responding.\x1b[1;0m" >> $stream_file
+                echo "\x1b[1;36mPURR STATUS: Restarting input from last seen timestamp.\x1b[1;0m" >> $stream_file
+                conn_status="alive"
+                if [ $am_verbose = "true" ]; then
+                    echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache 
+                fi
+            else # Otherwise, we'll enter a dead state and start polling for the device.
+                echo "\x1b[1;36mPURR STATUS: Device Not Responding.\x1b[1;0m" >> $stream_file
+                echo "\x1b[1;36mPURR STATUS: Locking input streams until device found.\x1b[1;0m" >> $stream_file
+                conn_status="dead"
+                if [ $am_verbose = "true" ]; then
+                    echo "\x1b[1;31m  $serial != \x1b[1;0m" > $purr_connection_state_cache
+                fi
+            fi
+        else # If we aren't in potential mode, we poll for the device until we find it.
+            adb -s $serial wait-for-device &> /dev/null
+            if [ $? -eq 0 ]; then
+                if [ $conn_status != "unknown" ]; then
+                    echo "\x1b[1;36mPURR STATUS: Device Responding.\x1b[1;0m" >> $stream_file
+                    echo "\x1b[1;36mPURR STATUS: Restarting input from last seen timestamp.\x1b[1;0m" >> $stream_file
+                fi
+
+                conn_status="alive"
+                if [ $am_verbose = "true" ]; then
+                    echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache
+                fi
+            fi
+        fi
+        
+        # Once we've established a device connection, we'll start streaming from logcat.
+        if [ $conn_status = "alive" ]; then
+
+            # Handles trimming logcat input to a specific timestamp.
+            trim_time=$(cat $purr_time_start_cache)
+            if [ -z $trim_time ]; then
+                adb -s $serial logcat -v color $stream_command >> $stream_file
+            else
+                
+                # We don't want the trim time to survive a thread cleanup,
+                # so once the verbose thread is sure all the other threads
+                # have read it, we wipe the state cache.
+                if [ $am_verbose = "true" ]; then
+                    { sleep 1.5 && echo "" > $purr_time_start_cache } &
+                fi
+                adb -s $serial logcat -v color -T $trim_time $stream_command >> $stream_file
+            fi
+
+            # We've been disconnected, and we're not sure what the state is. We'll
+            # grab the last message sent so we can restart at the same timestamp.
+            if [ $am_verbose = "true" ]; then
+                trimmed_time=$(echo $(tail -1 $stream_file) | cut -d' ' -f1-2 | sed -e 's/\x1b\[[0-9;]*m//g');
+                echo $trimmed_time > $purr_time_start_cache;
+            fi
+
+            echo "\x1b[1;36mPURR STATUS: Potential Connection Lost.\x1b[1;0m" >> $stream_file
+            conn_status="potential"
+        fi
+
+        sleep 0.5
+    done
+}
+
+# Usage command for help menu.
+usage=("purr"
+    "\n[-q: Sets the default query]"
+    "\n[-i: Disables the instruction header]"
+    "\n[-a: Set custom adb parameters as a string]"
+    "\n[-f: Set custom fzf parameters as a string]"
+    "\n[-v: Get version number]")
+
+VERSION="1.0.0"
+COMPOSITE_VERSION="Purr: $VERSION, fzf: $(fzf_purr --version), zsh: $ZSH_VERSION"
+
+# Parse argument flags.
+instruction_flag=true
+while getopts ':a:f:ivVq:' flags; do
+    case $flags in
+        q) query_string="--query=${OPTARG}" ;;
+        a) custom_adb_params=${OPTARG} ;;
+        f) custom_fzf_params=${OPTARG} ;;
+        i) instruction_flag=false ;;
+        v) echo $VERSION; exit 0 ;;
+        V) echo $COMPOSITE_VERSION; exit 0 ;;
+        *) echo $usage; exit 1 ;;
+    esac
+done
+
+# Checks that we are in an environment that can run purr.
+if ! __purr_check_env; then
+    echo "Could not validate purr env. Exiting."
+    exit 50
+fi
+
+# Create the directory our cache file will live.
+rand_prefix=$(/usr/bin/cat /dev/urandom | /usr/bin/tr -cd 'a-f0-9' | /usr/bin/head -c 8)
+cur_time=$(($(/usr/bin/date +%s) * 1000))
+dir_name="/tmp/purr_${rand_prefix}_${cur_time}"
+/usr/bin/mkdir "$dir_name"
+
+# Makes sure that we'll always run the cleanup if we exit
+# abnormally, through ctrl-c for example.
+trap "__purr_cleanup $dir_name" INT TERM
+
+# Create the cache files we'll use to communicate with fzf.
+__purr_create_files $dir_name
+
+# Grabs a serial number from adb.
+serial=$(pick_serial)
+if [ $? -ne 0 ]; then
+    echo $serial
+    __purr_cleanup $dir_name
+    exit 61
+fi
+
+# Load the serial number into the serial cache.    
+echo $serial > $purr_serial_cache
+
+# A secret tool which will help us later. We'll need this to make sure we're routing
+# copy requests correctly through SSH and TMUX.
+if [ -n "${TMUX-}" ]; then
+    pane_active_tty=$(tmux list-panes -F "#{pane_active} #{pane_tty}" | awk '$1=="1" { print $2 }')
+    target_tty="${SSH_TTY:-$pane_active_tty}"
+else
+    target_tty="$TTY"
+fi
+
+# Prompt for each input stream.
+stream_error_msg="\x1b[1;31mError\x1b[1;0m\t\t"
+stream_warn_msg="\x1b[1;33mWarning\x1b[1;0m\t\t"
+stream_info_msg="\x1b[1;32mInfo\x1b[1;0m\t\t"
+stream_verbose_msg="\x1b[1;34mVerbose\x1b[1;0m\t\t"
+stream_focus_msg="\x1b[1;35mFocus\x1b[1;0m\t\t"
+stream_adb_msg="\x1b[1;35mADB\x1b[1;0m\t\t"
+
+# Prompt for scroll lock on/off.
+slock_on_msg="\x1b[1;31mOn   \x1b[1;0m"
+slock_off_msg="\x1b[1;32mOff  \x1b[1;0m"
+
+# Prompt for each sorting mode.
+sorting_chronological="\x1b[1;35mChronological\x1b[1;0m\t"
+sorting_relevance="\x1b[1;36mRelevance\x1b[1;0m\t\t"
+
+# Some reasonable defaults for FZF.
+fzf_params=('--exact' '--ansi' '--tac' '--no-sort' '--multi' $query_string)
+fzf_pretty=('--info' 'inline' '--pointer' '>')
+fzf_header=('--header-first')
+label_header="     Date   $(date +"%Z %z")    PID   TID"
+fzf_label=('--border-label' $label_header '--border-label-pos' '1:top')
+fzf_gui=('--border' '--margin' '0.5%' '--padding' '0.5%' '--height' '100%')
+
+fzfpnh=($fzf_params $fzf_pretty $fzf_gui $custom_fzf_params $fzf_label)
+fzfp=($fzfpnh $fzf_header)
+
+__purr_print_instructions $purr_instruction_cache
+
+# Some reasonable defaults for adb logcat.
+teecmd=("|" 'tee' $purr_input_cache)
+check_adb_status=("|" 'grep' '-q' '-v' '"Lost connection to device."')
+
+load_generic_header=(
+    "echo -n \"Stream: \";"
+    "cat $purr_stream_header_cache | tr -d \"\n\";"
+    "echo -n \"Sort: \";"
+    "cat $purr_sort_header_cache | tr -d \"\n\";"
+    "echo -n \"Scroll Lock: \";"
+    "cat $purr_slock_cache | tr -d \"\n\";"
+    "echo \"\x1b[1;2;37mPurr: Happy Logcat\x1b[1;0m\";"
+)
+
+# Handles the UI logic of reloading the header.
+load_input_stream=(
+    "if /usr/bin/grep -q \"History\" $purr_stream_header_cache; then"
+        "cat $purr_input_stream_cache | zsh;"
+    "elif /usr/bin/grep -q \"Serial\" $purr_stream_header_cache; then"
+        "cat $purr_input_stream_cache | zsh;"
+    "elif /usr/bin/grep -q \"ADB\" $purr_stream_header_cache; then"
+        # If the user runs a command, put the full command as the first line.
+        "if /usr/bin/grep -q \"adb -s\" $purr_input_stream_cache; then"
+            "echo \"Command: \$(cat $purr_input_stream_cache)\";"
+        "fi;"
+        "cat $purr_input_stream_cache | zsh |& tee;" # Prints all streams to stdout.
+    'else;'
+        "serial=\$(cat $purr_serial_cache);"
+        'if adb devices | /usr/bin/grep $serial &> /dev/null; then'
+            "echo \"\x1b[1;32m  \$serial => \x1b[1;0m\" >| $purr_connection_state_cache;"
+        'else;'
+            "echo \"\x1b[1;31m  \$serial != \x1b[1;0m\" >| $purr_connection_state_cache;"
+        'fi;'
+
+        "cat $purr_input_stream_cache | zsh;"
+    "fi;"
+)
+
+# Handles the UI logic of scroll-locking the header.
+lock_input_stream=(
+    "cat $purr_input_cache;"
+)
+
+# Creates background workers to stream the logcat input streams for us.
+( __purr_background_handler & )
+
+set_stream_error="echo \"/usr/bin/tail -F -n 99999999 $purr_error_input_cache $teecmd\" >| $purr_input_stream_cache;"
+set_stream_warning="echo \"/usr/bin/tail -F -n 99999999 $purr_warning_input_cache $teecmd\" >| $purr_input_stream_cache;"
+set_stream_info="echo \"/usr/bin/tail -F -n 99999999 $purr_info_input_cache $teecmd\" >| $purr_input_stream_cache;"
+set_stream_verbose="echo \"/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache $teecmd\" >| $purr_input_stream_cache;"
+set_stream_adb="echo \"/usr/bin/tail -F -n 99999999 $purr_adb_cache $teecmd\" >| $purr_input_stream_cache;"
+
+stop_stream="echo \"stop\" >> $purr_background_handler_cache;"
+start_stream="echo \"start\" >> $purr_background_handler_cache;"
+
+# Sets the stream header to a given message.
+set_header_error="echo \"$stream_error_msg\" >| $purr_stream_header_cache;"
+set_header_warning="echo \"$stream_warn_msg\" >| $purr_stream_header_cache;"
+set_header_info="echo \"$stream_info_msg\" >| $purr_stream_header_cache;"
+set_header_verbose="echo \"$stream_verbose_msg\" >| $purr_stream_header_cache;"
+set_header_focus="echo \"$stream_focus_msg\" >| $purr_stream_header_cache;"
+set_header_adb="echo \"$stream_adb_msg\" >| $purr_stream_header_cache;"
+
+# Sets the sort header to a given message.
+set_sort_chrono="echo \"$sorting_chronological\" >| $purr_sort_header_cache;"
+set_sort_relevance="echo \"$sorting_relevance\" >| $purr_sort_header_cache;"
+
+# Saves the current query for an fzf reboot.
+save_current_query="echo {q} > $purr_query_cache;"
+
+# Sets the scroll lock header to a given state.
+set_slock_on="echo \"$slock_on_msg\" >| $purr_slock_cache;"
+set_slock_off="echo \"$slock_off_msg\" >| $purr_slock_cache;"
+
+# Boolean to determine state of scroll lock.
+is_slock_on="/usr/bin/grep -q  \"On\" \"$purr_slock_cache\""
+
+# Boolean to determine state of scroll lock.
+is_sort_chrono="/usr/bin/grep -q  \"Chronological\" \"$purr_sort_header_cache\""
+
+# Injects an empty line to force fzf to refresh the input stream.
+inject_empty_line="echo \"\";"
+
+bind_commands=()
+
+# Bind: F7, set preview to the instruction menu..
+instruction_preview_command="cat $purr_instruction_cache"
+instruction_preview_window="right,50%,nohidden,nofollow,wrap,<55(up,50%,nohidden,nofollow,wrap)"
+hint_preview=("change-preview($instruction_preview_command)+change-preview-window($instruction_preview_window)+refresh-preview")
+bind_commands+=('--bind' "F7:$hint_preview")
+
+# Preview: Highlights selected line, and shows 200 lines of context around it.
+# Bind: F9/10 for current/verbose stream, respectively.
+# TODO: Breaks if there are less than 200 lines of context. Can happen with wipe command.
+current_hint_preview_command="/usr/bin/grep --text --color -F {} $purr_input_cache -C 200 | /usr/bin/sed -e '201s/\x1b\[[0-9;]*m/\x1b[1;36m/g'"
+verbose_hint_preview_command="/usr/bin/grep --text --color -F {} $purr_verbose_input_cache -C 200 | /usr/bin/sed -e '201s/\x1b\[[0-9;]*m/\x1b[1;36m/g'"
+hint_preview_window="top,70%,nohidden,wrap,+200/2"
+
+bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-window($hint_preview_window)+refresh-preview")
+bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-window($hint_preview_window)+refresh-preview")
+
+# Preview: Highlights selected line, and shows 200 lines of context around it in the selected input stream.
+# Bind: Ctrl-P, toggle preview on/off.
+bind_commands+=('--bind' "ctrl-p:toggle-preview")
+
+# List of keys to bind when we load an input stream. We want to unbind these keys when we go to a non-input stream,
+# like history. Otherwise, we start getting undefined behaviors.
+default_command_suite="rebind(f1)\
++rebind(f2)\
++rebind(f3)\
++rebind(f4)\
++rebind(f5)\
++rebind(f6)\
++rebind(f7)\
++rebind(f9)\
++rebind(f10)\
++rebind(ctrl-p)\
++rebind(ctrl-r)\
++rebind(ctrl-s)\
++rebind(ctrl-j)\
++rebind(ctrl-f)\
++rebind(ctrl-w)\
++rebind(ctrl-t)\
++rebind(ctrl-alt-t)\
++rebind(tab)\
++rebind(ctrl-v)\
++rebind(ctrl-y)\
++unbind(enter)"
+
+# Bind: F1, show logcat error stream.
+error_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_error
+            $set_header_error
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $inject_empty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$default_command_suite"
+)
+bind_commands+=('--bind' "f1:$error_cmd")
+
+# Bind: F2, show logcat warning stream.
+warn_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_warning
+            $set_header_warning
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $inject_empty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$default_command_suite"
+)
+bind_commands+=('--bind' "f2:$warn_cmd")
+
+# Bind: F3, show logcat info stream.
+info_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_info
+            $set_header_info
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $inject_empty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$default_command_suite"
+)
+bind_commands+=('--bind' "f3:$info_cmd")
+
+# Bind: F4, show logcat verbose stream.
+verb_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_verbose
+            $set_header_verbose
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $inject_emppty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$default_command_suite"
+)
+bind_commands+=('--bind' "f4:$verb_cmd")
+
+adb_command_suite="rebind(f1)\
++rebind(f2)\
++rebind(f3)\
++rebind(f4)\
++rebind(f5)\
++rebind(f6)\
++unbind(f7)\
++unbind(f9)\
++unbind(f10)\
++unbind(ctrl-p)\
++unbind(ctrl-r)\
++rebind(ctrl-s)\
++rebind(ctrl-j)\
++rebind(ctrl-f)\
++unbind(ctrl-w)\
++unbind(ctrl-t)\
++unbind(ctrl-alt-t)\
++rebind(tab)\
++rebind(ctrl-v)\
++rebind(ctrl-y)\
++rebind(enter)"
+
+# Bind: F6, open adb command mode.
+adb_stream_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_adb
+            $set_header_adb
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $inject_empty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$adb_command_suite"
+)
+bind_commands+=('--bind' "f6:$adb_stream_cmd")
+
+# Bind: ctrl-s, stop stream and show input cache.
+stop_cmd=(
+    'execute-silent('
+         '{'
+            "if $is_slock_on; then"
+                $set_slock_off
+            "else"
+                $set_slock_on
+            "fi"
+        '} &'
+    ')+toggle-track+transform-header('
+        $load_generic_header
+    ")+$default_command_suite"
+)
+bind_commands+=('--bind' "ctrl-s:$stop_cmd")
+
+# Bind: ctrl-w, send a cache wipe request to logcat.
+wipe_cmd=(
+    'execute-silent('
+        $stop_stream
+        "serial=\$(cat $purr_serial_cache);"
+        'adb -s $serial logcat -c;'
+        $set_slock_off
+        "echo 'wipe' > $purr_accept_command_cache;"
+        $save_current_query
+        $start_stream
+    ')+accept'
+)
+bind_commands+=('--bind' "ctrl-w:$wipe_cmd")
+
+# Bind: ctrl-t, trim input to the end of the file.
+trim_cmd=(
+    'execute-silent('
+        $stop_stream
+        "serial=\$(cat $purr_serial_cache);"
+        $set_slock_off
+        "echo 'trim' > $purr_accept_command_cache;"
+        # Grab the timestamp from the selected message.
+        "trimmed_time=\$(echo {} | cut -d' ' -f1-2);"
+        "echo \$trimmed_time > $purr_time_start_cache;"
+        $save_current_query
+        $start_stream
+    ')+accept'
+)
+bind_commands+=('--bind' "ctrl-t:$trim_cmd")
+
+# Bind: ctrl-alt-t, de-trim input.
+untrim_cmd=(
+    'execute-silent('
+        $stop_stream
+        "serial=\$(cat $purr_serial_cache);"
+        $set_slock_off
+        "echo 'trim' > $purr_accept_command_cache;"
+        "echo '' > $purr_time_start_cache;"
+        $save_current_query
+        $start_stream
+    ')+accept'
+)
+bind_commands+=('--bind' "ctrl-alt-t:$untrim_cmd")
+
+# Bind: ctrl-f, brings the user to the currently selected entry.
+bind_commands+=('--bind' "ctrl-f:track+clear-query+hide-preview")
+
+# Bind: ctrl-j, toggle chronological/relevance sort.
+cmd_sort=(
+    "toggle-sort+execute-silent("
+        '{'
+            "if $is_sort_chrono; then"
+                $set_sort_relevance
+            "else"
+                $set_sort_chrono
+            "fi"
+        '} &'
+    ')+reload('
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+$default_command_suite"
+)
+bind_commands+=('--bind' "ctrl-j:$cmd_sort")
+
+# Bind: ctrl-y, print to clipboard.
+cmd_clipboard=(
+    "execute-silent("
+        "lines=\"{+}\";"
+        'eval "line_array=($lines)";'
+        'new_line_array=$(printf "%s\n" "${line_array[@]}");'
+        "$(which purr_pbcopy) \"\$new_line_array[@]\" > $target_tty"
+    ')+clear-selection'
+)
+bind_commands+=('--bind' "ctrl-y:$cmd_clipboard")
+
+# Bind: home/end, similar to page-up/page-down for preview.
+bind_commands+=('--bind' "home:preview-page-up")
+bind_commands+=('--bind' "end:preview-page-down")
+
+# Bind: ctrl-v, for going to the text editor.
+cmd_editor=(
+    "execute-silent("
+        "echo 'editor' > $purr_accept_command_cache;"
+        $save_current_query
+    ')+accept'
+)
+bind_commands+=('--bind' "ctrl-v:$cmd_editor")
+
+# Adds logic for handling history and serial selection.
+stream_history_msg="\x1b[1;36mHistory\x1b[1;0m\t\t"
+stream_serial_msg="\x1b[1;36mSerial\x1b[1;0m\t\t"
+
+set_stream_history="echo \"cat $purr_history_cache\" >| $purr_input_stream_cache;"
+set_header_history="echo \"$stream_history_msg\" >| $purr_stream_header_cache;"
+
+set_stream_serial="echo \"adb devices | /usr/bin/tail -n +2 |/usr/bin/sed '/^\s*$/d' | /usr/bin/sort | awk '{print \$ 1}'\" >| $purr_input_stream_cache;"
+set_header_serial="echo \"$stream_serial_msg\" >| $purr_stream_header_cache;"
+
+# List of keys to bind when we load the history stream.
+history_command_suite="rebind(f1)\
++rebind(f2)\
++rebind(f3)\
++rebind(f4)\
++rebind(f5)\
++rebind(f6)\
++unbind(f7)\
++unbind(f9)\
++unbind(f10)\
++unbind(ctrl-p)\
++unbind(ctrl-r)\
++unbind(ctrl-s)\
++rebind(ctrl-j)\
++unbind(ctrl-f)\
++unbind(ctrl-w)\
++unbind(ctrl-t)\
++unbind(ctrl-alt-t)\
++unbind(tab)\
++unbind(ctrl-v)\
++unbind(ctrl-y)\
++rebind(enter)"
+serial_command_suite="$history_command_suite"
+
+# Bind: F5, show serial stream.
+serial_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_serial
+            $set_header_serial
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+$serial_command_suite"
+)
+bind_commands+=('--bind' "f5:$serial_cmd")
+
+echo 0 >| $purr_history_counter_cache
+
+# This code is a bit arcane, but here's basically what it's doing.
+# When the query changes, we write an integer and start a timer.
+# Once the timer ends, we check the integer; if it's not the same,
+# we don't write to history. If it is, we check if we can find the
+# query in the history file. We'll then either write it or move it
+# to the top. This holistically allows us to write to history even 
+# though queries are never "submitted".
+history_input=(
+    'execute-silent('
+        '{'
+            "seen_counter=\$(cat $purr_history_counter_cache);"
+            '$(( seen_counter += 1 ));'
+            "echo \$seen_counter >| $purr_history_counter_cache;"
+            'sleep 3.5;'
+            "cur_counter=\$(cat $purr_history_counter_cache);"
+            'if [ $seen_counter -eq $cur_counter ]; then'
+                'query={q};'
+                "query=\$(echo \"\$query\" | xargs -d ' ' | tr -s ' ');"
+                'if [ -z "$query" ]; then'
+                    ':;'
+                "elif /usr/bin/grep -cim1 -x \" *\$query *\" $purr_history_cache; then"
+                    "line=\$(/usr/bin/grep -n -x \" *\$query *\" $purr_history_cache | cut -d : -f 1);"
+                    "/usr/bin/sed -i \"\${line}d\" $purr_history_cache;"
+                    "echo \$query >> $purr_history_cache;"  
+                    "echo 0 >| $purr_history_pointer_cache;"
+                'else;'
+                    "echo \$query >> $purr_history_cache;"
+                    "echo 0 >| $purr_history_pointer_cache;"
+                'fi;'
+            'fi;'
+        '} &'
+    ')'
+)
+
+bind_commands+=('--bind' "change:$history_input")
+
+# This just allows the user to use alt-shift-up/down to traverse
+# history. We just keep track in the file of where they are. We
+# wipe this pointer wheneever we add a new history entry.
+echo -1 >| $purr_history_pointer_cache
+history_up=(
+    'transform-query('
+        "line_count=\$(/usr/bin/wc -l < $purr_history_cache);"
+        "cur_pointer=\$(cat $purr_history_pointer_cache);"
+        '$(( cur_pointer += 1 ));'
+        'if [ $cur_pointer -lt $line_count ]; then'
+            "echo \$cur_pointer >| $purr_history_pointer_cache;"
+        'else;'
+            '$(( cur_pointer -= 1));'
+        'fi;'
+        'line_to_get="$((line_count - cur_pointer))";'
+        "/usr/bin/sed -n -e \${line_to_get}p $purr_history_cache;"
+    ')'
+)
+
+# See above.
+history_down=(
+    'transform-query('
+        "line_count=\$(/usr/bin/wc -l < $purr_history_cache);"
+        "cur_pointer=\$(cat $purr_history_pointer_cache);"
+        '$(( cur_pointer -= 1 ));'
+        'if [ $cur_pointer -ge -1 ]; then'
+            "echo \$cur_pointer >| $purr_history_pointer_cache;"
+        'else;'
+            '$(( cur_pointer += 1));'
+        'fi;'
+        'line_to_get="$((line_count - cur_pointer))";'
+        "/usr/bin/sed -n -e \${line_to_get}p $purr_history_cache;"
+    ')'
+)
+
+bind_commands+=('--bind' "alt-shift-up:$history_up")
+bind_commands+=('--bind' "alt-shift-down:$history_down")
+
+# Bind: ctrl-r, show history file.
+history_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_history
+            $set_header_history
+            $set_slock_off
+        '} &'
+    ')+reload('
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+clear-query+first+$history_command_suite"
+)
+bind_commands+=('--bind' "ctrl-r:$history_cmd")
+
+# We overload the hell of this command...
+# Bind: enter, select history command or serial selection.
+enter_cmd=( 
+    'transform-query('
+        "if /usr/bin/grep -q \"History\" $purr_stream_header_cache; then"
+            'echo {};'
+        'else;'
+            'echo {q};'
+        'fi;'
+    ')+execute-silent('
+        "if /usr/bin/grep -q \"History\" $purr_stream_header_cache; then"
+            "echo 'history' > $purr_accept_command_cache;"
+            $set_stream_verbose
+            $set_header_verbose
+            $set_slock_off
+            $save_current_query
+        "elif /usr/bin/grep -q \"Serial\" $purr_stream_header_cache; then"
+            $stop_stream
+            "echo {} > $purr_serial_cache;"
+            "echo 'serial' > $purr_accept_command_cache;"
+            $set_stream_verbose
+            $set_header_verbose
+            $set_slock_off
+            $save_current_query
+            $start_stream
+        "elif /usr/bin/grep -q \"ADB\" $purr_stream_header_cache; then"
+            $set_slock_off
+            "echo 'adb_cmd' > $purr_accept_command_cache;"
+            $save_current_query
+        "fi;"
+    ')+accept'
+)
+bind_commands+=('--bind' "enter:$enter_cmd")
+
+# Adds logic to handle the prompt change to track serial numbers.
+focus_cmd=(
+    'transform-prompt('
+        " connection_state=\$(cat $purr_connection_state_cache);"
+        'echo $connection_state;'
+    ')'
+)
+bind_commands+=('--bind' "focus:$focus_cmd")
+
+# Command to exit purr.
+esc_cmd=(
+    'execute-silent('
+        "echo 'escape' > $purr_accept_command_cache;"
+    ')+accept'
+)
+bind_commands+=('--bind' "esc:$esc_cmd")
+
+
+# Set the default program state.
+echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache
+echo $stream_verbose_msg >| $purr_stream_header_cache
+echo $slock_off_msg >| $purr_slock_cache
+echo $sorting_chronological >| $purr_sort_header_cache
+echo "/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache $teecmd" >| $purr_input_stream_cache
+
+# Sets the instruction window to be open by default.
+if [ "$instruction_flag" = "true" ]; then
+    local instruction_preview=("--preview"
+    "$instruction_preview_command" 
+    "--preview-window"
+    "right,50%:nohidden:nofollow:wrap,<55(up,50%:nohidden:nofollow:wrap)")
+else
+    local instruction_preview=("--preview"
+    "$verbose_hint_preview_command" 
+    "--preview-window"
+    "top,hidden,70%,wrap,+200/2")
+fi
+
+initial_pos_argument=""
+
+# Keep looping fzf until the user escapes, to support opening in text editors.
+while true; do
+    defcmd=(
+        $load_input_stream
+    )
+
+    # If we have a cahced query, either from history or another
+    # fzf-ending command, retrieve it.
+    cached_query="$(cat $purr_query_cache)"
+    "" > $purr_query_cache &> /dev/null
+
+    # Make sure our serial is up to date.
+    serial=$(cat $purr_serial_cache)
+    fzf_prompt=('--prompt' "  $serial -> ")
+
+    if /usr/bin/grep -q "History" $purr_stream_header_cache; then
+        start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$history_command_suite")
+    elif /usr/bin/grep -q "ADB" $purr_stream_header_cache; then
+        start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$adb_command_suite")
+        adb_query_cmd="adb -s $serial shell $cached_query"
+        cached_query=""
+        echo $adb_query_cmd > $purr_input_stream_cache
+    else
+        start_command=('--bind' "start:transform-header($load_generic_header)+$default_command_suite")
+    fi
+
+    # Starts and runs the actual fzf process.
+    if [ ! -z $cached_query ]; then
+        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" fzf_purr $instruction_preview $fzfp $fzf_prompt $bind_commands $start_command --query=$cached_query)
+        ret=$?
+    else
+        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" fzf_purr $instruction_preview $fzfp $fzf_prompt $bind_commands $start_command)
+        ret=$?
+    fi
+
+
+    cached_query=""
+    accept_cmd=""
+
+    # 0 is normal exit, 1 is exit with no accepted. We don't
+    # want any exit codes here.
+    if [ $ret -ne 0 ] && [ $ret -ne 1 ]; then
+        break
+    fi
+    
+    # The async processes might take a bit of time to
+    # get the accept command in.
+    while ! [ -s $purr_accept_command_cache ]; do
+        sleep 0.01
+    done
+    
+    # We'll use this to figure out the user input before fzf stopped.
+    accept_cmd=$(cat $purr_accept_command_cache)
+    "" > $purr_accept_command_cache &> /dev/null
+
+    # Abort from the loop if the user has sent an escape command.
+    if [ $accept_cmd = "escape" ]; then 
+        break
+    fi
+
+    # We sleep a lot here to give async processes time to finish.
+    if [ $accept_cmd = "wipe" ]; then
+        sleep 0.5
+        continue
+    elif [ $accept_cmd = "adb_cmd" ]; then
+        continue
+    elif [ $accept_cmd = "serial" ]; then
+        sleep 0.5
+        continue
+    elif [ $accept_cmd = "history" ]; then
+        continue
+    elif [ $accept_cmd = "trim" ]; then
+        sleep 0.5
+        continue
+    elif [ $accept_cmd = "editor" ]; then
+
+        if [ -z $accepted ]; then
+            continue
+        fi 
+
+        # Grab the context around the accepted line.
+        if [ $(echo $accepted | wc -l) -eq 1 ]; then
+            if command -v rg &> /dev/null; then
+                /usr/bin/rg --color=always -F "$accepted" $purr_input_cache -C 500 > $purr_editor_input_cache
+            else 
+                /usr/bin/grep --color=always -F "$accepted" $purr_input_cache -C 500 > $purr_editor_input_cache
+            fi
+        else
+            echo $accepted > $purr_editor_input_cache
+        fi
+
+        # Preferentially grab the editor from $EDITOR_PURR, then $EDITOR, then just use vim.
+        if [ $EDITOR_PURR ]; then
+            eval "$EDITOR_PURR $purr_editor_input_cache"
+        elif [ $EDITOR ]; then
+            eval "$EDITOR $purr_editor_input_cache"
+        else
+            echo "No editor detected. Overriding to vim."
+            echo "Purr will read from \$EDITOR_PURR, then \$EDITOR, then default to vim."
+            vim +501 $purr_editor_input_cache
+        fi
+    else
+        break
+    fi
+done
+
+__purr_cleanup $dir_name
