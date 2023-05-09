@@ -17,7 +17,7 @@ If you are attempting to run on a non-Ubuntu machine, replacing the bundled fzf 
 Support for Mac or Windows may be provided in future, but is not a current priority.
 
 ### Guide
-purr includes a simple tool to help select the device serial from adb devices, or can read from the $ANDROID_SERIAL environment variable if set. Otherwise, purr has three command-line parameters:
+purr includes a simple tool to help select the device serial from adb devices, or can read from the $ANDROID_SERIAL environment variable if set. Otherwise, purr has six command-line parameters:
 
 * -a: Sets custom parameters for adb that will be used as well as the defaults whenever an input stream is selected.
 * -f: Sets custom parameters for fzf. Used on top of default parameters.
