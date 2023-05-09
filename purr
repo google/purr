@@ -182,6 +182,9 @@ __purr_create_files() {
     purr_history_pointer_cache="$dir_name/history-pointer.purr"
     /usr/bin/touch $purr_history_pointer_cache
 
+    purr_spc_purpose_cache="$dir_name/spc-purpose-cache.purr"
+    /usr/bin/touch $purr_spc_purpose_cache
+
     # We'll use this to cache the result of ADB commands.
     purr_adb_cache="$dir_name/adb-cache.purr"
     /usr/bin/touch $purr_adb_cache
@@ -1084,12 +1087,36 @@ while true; do
     elif /usr/bin/grep -q "ADB" $purr_stream_header_cache; then
         start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$adb_command_suite")
         if [ "$cached_query" = "Give me cat facts!" ]; then
-            cat_facts="${0:a:h}/resources/cat_facts.txt"
-            if [ -f $cat_facts ]; then
-                adb_query_cmd="cat $cat_facts"
-            else
-                adb_query_cmd="echo 'No cat facts for you!'"
-            fi
+            cat << "EOF" > $purr_spc_purpose_cache
+                             _                    )
+                            ( \_                  |
+                      _,-'/'_ , ;-.               \
+.                  ,-'  O  ( ` .<= `.              \
+ `.              ,'o O o 0     o , ,'-.           ,-'
+`. `.          ,'o O 0/ 0 )___,.--','"""`--._,,--'
+__>. \       ,: ' o O/. o/  __,`--'-.                _,-'
+-._   `-``._/o 0 0(),| o/-''         `-.__      __,-'|
+   )_.   ` / ~':o ,-.\o \                 `----'     |
+      `-.-| 0 o.`.\ /o|`.|                           |
+          /o . ;.'`o|'|o \                           /
+          |`,,'  `._/0|\',\                         /
+          |`.|`._/ \o'||o |                         |
+         /,`/       )./|.'|                         /
+---------|.|--------\,\`--'-------------------------\
+         |O|         \``.                           |
+         |o|          `._)                          \
+         |(|                                         \
+         |O|                                          |
+  hh     |)|                                          |
+         /(|                                          |
+        (o/                                           |
+         \)                                           /
+Cats who can purr can't roar, and vice-versa. 
+Cheetahs can't roar, but they can meow and purr. 
+This is because cheetahs are the cutest kittens at heart.
+This has been Cat Facts with Alfred.
+EOF
+            adb_query_cmd="cat $purr_spc_purpose_cache"
         else
             adb_query_cmd="adb -s $serial shell $cached_query"
         fi
