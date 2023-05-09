@@ -97,7 +97,7 @@ If multiple lines are selected, only those selected lines will be opened in the 
 
 If you've found an error, please file an issue:
 
-https://github.com/google/logcat_purr/issues
+https://github.com/google/purr/issues
 
 Patches are encouraged, and may be submitted by forking this project and
 submitting a pull request through GitHub.
