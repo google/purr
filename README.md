@@ -4,45 +4,47 @@
 purr is a zsh CLI tool for viewing and searching through Android logcat output. It leverages [fzf](https://github.com/junegunn/fzf) to provide a simple yet powerful user interface, fuzzy-finding capabilities, and much more. 
 
 ### Motivation
-While Android Studio's logcat viewer is sufficient for most app development, it breaks down when exposed to situations such as terminal-only access or when multiple devices need to be accessed quickly. When performing development on the Android operating system itself, developers revert to using raw logcat in shell.
+While Android Studio's logcat viewer is sufficient for most app development, it breaks down when exposed to situations such as terminal-only access or when multiple devices need to be accessed quickly. When performing development on the Android operating system itself, developers revert to using raw `adb logcat` in shell.
 
-This is sub-optimal and wastes a lot of time on writing grep statements and rooting through uncolored, unfiltered text with poor user experience. purr is meant as a solution to this; a powerful logcat viewer running entirely on the shell, capable of going through millions of logs quickly, while leveraging other shell-based solutions for common problems.
+This is sub-optimal and wastes a lot of time on writing `grep` statements and rooting through uncolored, unfiltered text with poor user experience. `purr` is meant as a solution to this; a powerful logcat viewer running entirely on the shell, capable of going through millions of logs quickly, while leveraging other shell-based solutions for common problems.
 
 ### Dependencies
 
-purr currently only functions on Ubuntu Linux on a zsh terminal, and an adb command. It comes bundled with fzf to ensure full feature compatibility.
+`purr` currently only functions on an x86-64 Ubuntu Linux on a zsh terminal. It comes bundled with `fzf` to ensure full feature compatibility.
 
-If you are attempting to run on a non-Ubuntu machine, replacing the bundled fzf binary with a system-compatible binary may work. 
+If you are attempting to run on a non-x86-64 or non-Ubuntu machine, replacing the bundled `fzf` binary with a system-compatible binary may work.
 
 Support for Mac or Windows may be provided in future, but is not a current priority.
 
 ### Installation
 1. Clone the repo
 2. Add the scripts directory to your path
-3. Run using "purr"
+3. Run using `purr`
 
-purr requires the following commands to be defined to run correctly: `purr`, `pbcopy_purr`, and `fzf_purr`. You can import these files from the repo into a location already in your path (Ex. `/usr/bin/`), or source the symlinks from the included scripts directory. 
+`purr` requires the following commands to be defined to run correctly: `purr`, `pbcopy_purr`, and `fzf_purr`. You can import these files from the repo into a location already in your path (Ex. `/usr/bin/`), or source the symlinks from the included scripts directory. 
 
-Both `fzf_purr` and `pbcopy_purr` are simply bundled versions of the public programs. If your local version of fzf is >= to the version of the bundled fzf binary, you can create a symlink from `fzf_purr` to `fzf`; ditto with `pbcopy_purr`.
+Both `fzf_purr` and `pbcopy_purr` are simply bundled versions of the public programs. If your local version of `fzf` is >= to the version of the bundled `fzf` binary, you can create a symlink from `fzf_purr` to `fzf`; ditto with `pbcopy_purr`.
 
 ### Guide
-purr includes a simple tool to help select the device serial from adb devices, or can read from the $ANDROID_SERIAL environment variable if set. Otherwise, purr has six command-line parameters:
+`purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
 
-* -a: Sets custom parameters for adb that will be used as well as the defaults whenever an input stream is selected.
-* -f: Sets custom parameters for fzf. Used on top of default parameters.
+* -a: Sets custom parameters for `adb` that will be used as well as the defaults whenever an input stream is selected.
+* -f: Sets custom parameters for `fzf`. Used on top of default parameters.
 * -i: Disables the instruction preview on launch.
-* -q: Set the default query string upon purr being opened.
-* -v: Shows the purr version.
-* -V: Shows a composite version of purr and dependencies.
+* -q: Set the default query string upon `purr` being opened.
+* -v: Shows the `purr` version.
+* -V: Shows a composite version of `purr` and dependencies.
 
 Any other command-line parameters will print the help dialog.
+
+Note that both `-a` and `-f` are read without validation; there is no guarantee that setting either parameter will not break `purr`.
 
 #### Binds
 The following hotkeys can be used:
 
 
 #### General
-* Escape: Exits purr. Ctrl-c and other methods also work, but may take longer, and may not gracefully exit.
+* Escape: Exits `purr`. Ctrl-c and other methods also work, but may take longer, and may not gracefully exit.
 
 #### Stream Modes
 * F1/F2/F3/F4: Sets the logcat stream between Error/Warning/Info/Verbose, respectively.
@@ -74,7 +76,7 @@ The following hotkeys can be used:
 * Ctrl-v: Opens the text editor; see below.
 
 #### History
-purr saves a query string to history once it has not been changed for more than 3.5 seconds. You can use the following hotkeys to access history:
+`purr` saves a query string to history once it has not been changed for more than 3.5 seconds. You can use the following hotkeys to access history:
 
 * Alt-shift-up: Move to the next entry in history.
 * Alt-shift-down: Move to the previous entry in history.
@@ -82,9 +84,9 @@ purr saves a query string to history once it has not been changed for more than 
 When scrolling through history with alt-shift-up or alt-shift-down, your position in the history will reset once a string has been in the query for 3.5 seconds.
 
 #### Editor
-When you select a single line and press Ctrl-V, purr will open the selected line and surrounding context in a text editor. You can specify the text editor through the $EDITOR or $EDITOR_PURR environment variables; if no text editor is specified, purr will use vim. 
+When you select a single line and press Ctrl-V, `purr` will open the selected line and surrounding context in a text editor. You can specify the text editor through the `$EDITOR` or `$EDITOR_PURR` environment variables; if no text editor is specified, `purr` will use `vim`. 
 
-Note that logcat uses ANSI color codes to display color, so an editor that supports these codes is recommended; for example, [AnsiEsc](https://www.vim.org/scripts/script.php?script_id=302) for Vim.
+Note that logcat uses ANSI color codes to display color, so an editor that supports these codes is recommended; for example, [AnsiEsc](https://www.vim.org/scripts/script.php?script_id=302) for `Vim`.
 
 If multiple lines are selected, only those selected lines will be opened in the text editor.
 
