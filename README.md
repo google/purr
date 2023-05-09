@@ -16,6 +16,15 @@ If you are attempting to run on a non-Ubuntu machine, replacing the bundled fzf 
 
 Support for Mac or Windows may be provided in future, but is not a current priority.
 
+### Installation
+1. Clone the repo
+2. Add the scripts directory to your path
+3. Run using "purr"
+
+purr requires the following commands to be defined to run correctly: `purr`, `pbcopy_purr`, and `fzf_purr`. You can import these files from the repo into a location already in your path (Ex. `/usr/bin/`), or source the symlinks from the included scripts directory. 
+
+Both `fzf_purr` and `pbcopy_purr` are simply bundled versions of the public programs. If your local version of fzf is >= to the version of the bundled fzf binary, you can create a symlink from `fzf_purr` to `fzf`; ditto with `pbcopy_purr`.
+
 ### Guide
 purr includes a simple tool to help select the device serial from adb devices, or can read from the $ANDROID_SERIAL environment variable if set. Otherwise, purr has six command-line parameters:
 
@@ -78,11 +87,6 @@ When you select a single line and press Ctrl-V, purr will open the selected line
 Note that logcat uses ANSI color codes to display color, so an editor that supports these codes is recommended; for example, [AnsiEsc](https://www.vim.org/scripts/script.php?script_id=302) for Vim.
 
 If multiple lines are selected, only those selected lines will be opened in the text editor.
-
-### Installation
-1. Clone the repo
-2. Add the scripts directory to your path
-3. Run using "purr"
 
 ### Development
 1. Clone the repo
