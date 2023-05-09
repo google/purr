@@ -1083,7 +1083,17 @@ while true; do
         start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$history_command_suite")
     elif /usr/bin/grep -q "ADB" $purr_stream_header_cache; then
         start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$adb_command_suite")
-        adb_query_cmd="adb -s $serial shell $cached_query"
+        if [ "$cached_query" = "Give me cat facts!" ]; then
+            cat_facts="$PWD/resources/cat_facts.txt"
+            if [ -f $cat_facts ]; then
+                adb_query_cmd="cat $PWD/resources/cat_facts.txt"
+            else
+                adb_query_cmd="echo 'No cat facts for you!'"
+            fi
+        else
+            adb_query_cmd="adb -s $serial shell $cached_query"
+        fi
+
         cached_query=""
         echo $adb_query_cmd > $purr_input_stream_cache
     else
