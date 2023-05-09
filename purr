@@ -387,7 +387,7 @@ __purr_stream_background_file() {
             # Handles trimming logcat input to a specific timestamp.
             trim_time=$(cat $purr_time_start_cache)
             if [ -z $trim_time ]; then
-                adb -s $serial logcat -v color $stream_command >> $stream_file
+                eval "adb -s $serial logcat -v color $custom_adb_params '$stream_command' >> $stream_file"
             else
                 
                 # We don't want the trim time to survive a thread cleanup,
@@ -396,7 +396,7 @@ __purr_stream_background_file() {
                 if [ $am_verbose = "true" ]; then
                     { sleep 1.5 && echo "" > $purr_time_start_cache } &
                 fi
-                adb -s $serial logcat -v color -T $trim_time $stream_command >> $stream_file
+                eval "adb -s $serial logcat -v color $custom_adb_params -T '$trim_time'  '$stream_command' >> $stream_file"
             fi
 
             # We've been disconnected, and we're not sure what the state is. We'll
@@ -422,7 +422,7 @@ usage=("purr"
     "\n[-f: Set custom fzf parameters as a string]"
     "\n[-v: Get version number]")
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $(fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
