@@ -452,6 +452,7 @@ fi
 if [ -z $fzf_purr ]; then
     echo "Could not identify valid fzf version."
     echo "purr requires fzf 0.40.0 or higher."
+    exit 1
 fi
 
 VERSION="1.0.2"
