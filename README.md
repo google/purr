@@ -12,11 +12,11 @@ This is sub-optimal and wastes a lot of time on writing `grep` statements and ro
 
 ### Dependencies
 
-`purr` currently only functions on an x86-64 Ubuntu Linux on a zsh terminal. It comes bundled with `fzf` to ensure full feature compatibility.
+`purr` currently functions on Ubuntu Linux and Mac on zsh. It will attempt to source an `fzf` version locally if possible, but requires version `0.40.0` or higher.
 
-If you are attempting to run on a non-x86-64 or non-Ubuntu machine, replacing the bundled `fzf` binary with a system-compatible binary may work.
+If you do not have `fzf` `0.40.0` or higher locally, `purr` will use bundled `fzf` versions for `linux_x86_64`, `darwin_arm64` or `darwin_amd64` if applicable. If you have a different operating system, you need to download a `0.40.0` or higher `fzf` binary manually.
 
-Support for Mac or Windows may be provided in future, but is not a current priority.
+Support for Windows may be provided in future, but is not a current priority.
 
 ### Installation
 1. Clone the repo
