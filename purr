@@ -520,7 +520,7 @@ echo $serial > $purr_serial_cache
 
 # A secret tool which will help us later. We'll need this to make sure we're routing
 # copy requests correctly through SSH and TMUX.
-if [ -n "${TMUX-}" ] && []; then
+if [ -n "${TMUX-}" ]; then
     pane_active_tty=$(tmux list-panes -F "#{pane_active} #{pane_tty}" | awk '$1=="1" { print $2 }')
     if [ ! -z $SSH_TTY ]; then
         target_tty="${SSH_TTY:-$pane_active_tty}"
