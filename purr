@@ -435,7 +435,7 @@ usage=("purr"
 # to the applicable places. For now, we sideload fzf. Otherwise, we load the 
 # local fzf binary. Why these specific versions? Because this is an internal tool.
 autoload is-at-least
-if command -v rg &> /dev/null && is-at-least "0.40.0" $(fzf --version | cut -d' ' -f1); then
+if command -v fzf &> /dev/null && is-at-least "0.40.0" $(fzf --version | cut -d' ' -f1); then
     fzf_purr="fzf"
 elif [ $(uname -s) = "Darwin" ]; then
     if [ $(arch) = "arm64" ]; then
