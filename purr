@@ -455,7 +455,21 @@ if [ -z $fzf_purr ]; then
     exit 1
 fi
 
-VERSION="1.0.2"
+# Depending on the situation we are in, we want a different version of pbcopy. 
+# We'll always fall back to OSC-52 as last resort, but it's not optimal since
+# we are sending TTY output, which makes fzf unhappy. 
+if command -v pbcopy &> /dev/null && [ -z $SSH_TTY ]; then
+    pbcopy_purr="pbcopy"
+elif command -v purr_osc52_copy &> /dev/null; then
+    pbcopy_purr="purr_osc52_copy"
+fi
+
+if [ -z $pbcopy_purr ]; then
+    echo "Could not identify copy program."
+    echo "purr will continue, but the Ctrl-Y hotkey will not work."
+fi
+
+VERSION="1.0.3"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -504,9 +518,13 @@ echo $serial > $purr_serial_cache
 
 # A secret tool which will help us later. We'll need this to make sure we're routing
 # copy requests correctly through SSH and TMUX.
-if [ -n "${TMUX-}" ]; then
+if [ -n "${TMUX-}" ] && []; then
     pane_active_tty=$(tmux list-panes -F "#{pane_active} #{pane_tty}" | awk '$1=="1" { print $2 }')
-    target_tty="${SSH_TTY:-$pane_active_tty}"
+    if [ ! -z $SSH_TTY ]; then
+        target_tty="${SSH_TTY:-$pane_active_tty}"
+    else
+        target_tty="${TTY:-$pane_active_tty}"
+    fi
 else
     target_tty="$TTY"
 fi
@@ -861,7 +879,7 @@ cmd_clipboard=(
         "lines=\"{+}\";"
         'eval "line_array=($lines)";'
         'new_line_array=$(printf "%s\n" "${line_array[@]}");'
-        "$(which pbcopy_purr) \"\$new_line_array[@]\" > $target_tty"
+        "echo \"\$new_line_array[@]\" | $(which $pbcopy_purr) > $target_tty"
     ')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-y:$cmd_clipboard")

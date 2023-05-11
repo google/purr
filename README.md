@@ -23,9 +23,11 @@ Support for Windows may be provided in future, but is not a current priority.
 2. Add the scripts directory to your path
 3. Run using `purr`
 
-`purr` requires the following commands to be defined to run correctly: `purr`, `pbcopy_purr`, and `fzf_purr`. You can import these files from the repo into a location already in your path (Ex. `/usr/bin/`), or source the symlinks from the included scripts directory. 
 
-Both `fzf_purr` and `pbcopy_purr` are simply bundled versions of the public programs. If your local version of `fzf` is >= to the version of the bundled `fzf` binary, you can create a symlink from `fzf_purr` to `fzf`; ditto with `pbcopy_purr`.
+`purr` comes with two bundled programs:
+
+* `purr_osc52_copy` is a fallback to copy to the system clipboard through SSH and TMUX sessions.
+* `purr_fzf` is a bundled version of fzf `0.40.0` used if a higher version of `fzf` cannot be found.
 
 ### Guide
 `purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
