@@ -829,16 +829,18 @@ bind_commands+=('--bind' "ctrl-w:$wipe_cmd")
 # Bind: ctrl-t, trim input to the end of the file.
 trim_cmd=(
     'execute-silent('
-        $stop_stream
-        "serial=\$(cat $purr_serial_cache);"
-        $set_slock_off
-        "echo 'trim' > $purr_accept_command_cache;"
-        # Grab the timestamp from the selected message.
         "trimmed_time=\$(echo {} | cut -d' ' -f1-2);"
-        "echo \$trimmed_time > $purr_time_start_cache;"
-        $save_current_query
-        $start_stream
-    ')+accept'
+        'if [ ! -z $trimmed_time ]; then'
+            $stop_stream
+            "serial=\$(cat $purr_serial_cache);"
+            $set_slock_off
+            "echo 'trim' > $purr_accept_command_cache;"
+            # Grab the timestamp from the selected message.
+            "echo \$trimmed_time > $purr_time_start_cache;"
+            $save_current_query
+            $start_stream
+        'fi;'
+    ')+accept-non-empty'
 )
 bind_commands+=('--bind' "ctrl-t:$trim_cmd")
 
@@ -893,9 +895,12 @@ bind_commands+=('--bind' "end:preview-page-down")
 # Bind: ctrl-v, for going to the text editor.
 cmd_editor=(
     "execute-silent("
-        "echo 'editor' > $purr_accept_command_cache;"
-        $save_current_query
-    ')+accept'
+        "accepted=\$(echo {});"
+        'if [ ! -z $accepted ]; then'
+            "echo 'editor' > $purr_accept_command_cache;"
+            $save_current_query
+        'fi;'
+    ')+accept-non-empty'
 )
 bind_commands+=('--bind' "ctrl-v:$cmd_editor")
 
@@ -1059,7 +1064,10 @@ enter_cmd=(
             $save_current_query
         "elif /usr/bin/grep -q \"Serial\" $purr_stream_header_cache; then"
             $stop_stream
-            "echo {} > $purr_serial_cache;"
+            "accepted=\$(echo {});"
+            'if [ ! -z $accepted ]; then'
+                "echo {} > $purr_serial_cache;"
+            'fi;'
             "echo 'serial' > $purr_accept_command_cache;"
             $set_stream_verbose
             $set_header_verbose
