@@ -459,9 +459,11 @@ fi
 # We'll always fall back to OSC-52 as last resort, but it's not optimal since
 # we are sending TTY output, which makes fzf unhappy. 
 if command -v pbcopy &> /dev/null && [ -z $SSH_TTY ]; then
-    pbcopy_purr="pbcopy"
+    pbcopy_purr="$(which pbcopy)"
+elif command -v xsel &> /dev/null && [ ! -z $DISPLAY ]; then
+    pbcopy_purr="xsel --clipboard --input"
 elif command -v purr_osc52_copy &> /dev/null; then
-    pbcopy_purr="purr_osc52_copy"
+    pbcopy_purr="$(which purr_osc52_copy)"
 fi
 
 if [ -z $pbcopy_purr ]; then
@@ -879,7 +881,7 @@ cmd_clipboard=(
         "lines=\"{+}\";"
         'eval "line_array=($lines)";'
         'new_line_array=$(printf "%s\n" "${line_array[@]}");'
-        "echo \"\$new_line_array[@]\" | $(which $pbcopy_purr) > $target_tty"
+        "echo \"\$new_line_array[@]\" | $pbcopy_purr > $target_tty"
     ')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-y:$cmd_clipboard")
