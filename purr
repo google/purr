@@ -24,6 +24,12 @@ timeout() {
     perl -e 'alarm shift; exec @ARGV' "$@"
 }
 
+wait_for_file() {
+    while ! [ -s $1 ]; do
+        sleep 0.01
+    done
+}
+
 # Queries the user to choose between all connected adb devices.
 # Output: Serial number of the chosen adb device, to be used in adb -s $(pick_serial).
 pick_serial() {
@@ -687,7 +693,8 @@ default_command_suite="rebind(f1)\
 +rebind(tab)\
 +rebind(ctrl-v)\
 +rebind(ctrl-y)\
-+unbind(enter)"
++unbind(enter)\
++unbind(double-click)"
 
 # Bind: F1, show logcat error stream.
 error_cmd=(
@@ -777,7 +784,8 @@ adb_command_suite="rebind(f1)\
 +rebind(tab)\
 +rebind(ctrl-v)\
 +rebind(ctrl-y)\
-+rebind(enter)"
++rebind(enter)\
++unbind(double-click)"
 
 # Bind: F6, open adb command mode.
 adb_stream_cmd=(
@@ -935,7 +943,8 @@ history_command_suite="rebind(f1)\
 +unbind(tab)\
 +unbind(ctrl-v)\
 +unbind(ctrl-y)\
-+rebind(enter)"
++rebind(enter)\
++unbind(double-click)"
 serial_command_suite="$history_command_suite"
 
 # Bind: F5, show serial stream.
@@ -1204,16 +1213,14 @@ EOF
     
     # The async processes might take a bit of time to
     # get the accept command in.
-    while ! [ -s $purr_accept_command_cache ]; do
-        sleep 0.01
-    done
+    timeout 1 "wait_for_file $purr_accept_command_cache"
     
     # We'll use this to figure out the user input before fzf stopped.
     accept_cmd=$(cat $purr_accept_command_cache)
     "" > $purr_accept_command_cache &> /dev/null
 
     # Abort from the loop if the user has sent an escape command.
-    if [ $accept_cmd = "escape" ]; then 
+    if [ -z $accept_cmd ] || [ $accept_cmd = "escape" ]; then
         break
     fi
 
