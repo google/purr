@@ -355,7 +355,11 @@ __purr_stream_background_file() {
         local am_verbose="false"
     fi
 
-    touch $stream_file
+    # If the directory doesn't exist anymore, it's likely that we have exited.
+    touch $stream_file &> /dev/null
+    if [ $? -ne 0 ]; then
+        exit
+    fi
 
     # We don't know anything about the connection yet, even
     # though we should be in a good state.
