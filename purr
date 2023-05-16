@@ -423,7 +423,12 @@ __purr_stream_background_file() {
                 # so once the verbose thread is sure all the other threads
                 # have read it, we wipe the state cache.
                 if [ $am_verbose = "true" ]; then
-                    { sleep 1.5 && echo "" > $purr_time_start_cache } &
+                    {
+                        sleep 1.5
+                        if [ -f $purr_time_start_cache ]; then
+                            echo "" > $purr_time_start_cache &> /dev/null
+                        fi
+                    } &
                 fi
                 eval "adb -s $serial logcat -v color $custom_adb_params -T '$trim_time'  '$stream_command' >> $stream_file"
             fi
