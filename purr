@@ -30,11 +30,13 @@ wait_for_file() {
     done
 }
 
+# We want to avoid the case where we don't have any input coming through,
+# causing a block until an error is thrown.
 wait_for_input_streams() {
-    wait_for_file $purr_verbose_input_cache
-    wait_for_file $purr_info_input_cache
-    wait_for_file $purr_warning_input_cache
-    wait_for_file $purr_error_input_cache
+    timeout 0.1 wait_for_file $purr_verbose_input_cache
+    timeout 0.1 wait_for_file $purr_info_input_cache
+    timeout 0.1 wait_for_file $purr_warning_input_cache
+    timeout 0.1 wait_for_file $purr_error_input_cache
 }
 
 # Queries the user to choose between all connected adb devices.
