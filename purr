@@ -30,6 +30,13 @@ wait_for_file() {
     done
 }
 
+wait_for_input_streams() {
+    wait_for_file $purr_verbose_input_cache
+    wait_for_file $purr_info_input_cache
+    wait_for_file $purr_warning_input_cache
+    wait_for_file $purr_error_input_cache
+}
+
 # Queries the user to choose between all connected adb devices.
 # Output: Serial number of the chosen adb device, to be used in adb -s $(pick_serial).
 pick_serial() {
@@ -283,7 +290,7 @@ __purr_cleanup() {
 
     # Delete all of the cached state files.
     if [ -d $dir_name ]; then
-        rm -r $dir_name
+        rm -r $dir_name &> /dev/null
     fi
 }
 
@@ -319,7 +326,9 @@ __purr_start_streams() {
 # the stream file, so we don't care about is happening when they die.
 __purr_cleanup_streams() {
     kill ${${(v)jobstates##*:*:}%=*}
-    sleep 0.5
+    for pid in ${${(v)jobstates##*:*:}%=*}; do
+        wait $pid
+    done
     rm $purr_error_input_cache &> /dev/null
     rm $purr_warning_input_cache &> /dev/null
     rm $purr_info_input_cache &> /dev/null
@@ -1200,7 +1209,6 @@ EOF
         ret=$?
     fi
 
-
     cached_query=""
     accept_cmd=""
 
@@ -1223,19 +1231,18 @@ EOF
         break
     fi
 
-    # We sleep a lot here to give async processes time to finish.
     if [ $accept_cmd = "wipe" ]; then
-        sleep 0.5
+        wait_for_input_streams
         continue
     elif [ $accept_cmd = "adb_cmd" ]; then
         continue
     elif [ $accept_cmd = "serial" ]; then
-        sleep 0.5
+        wait_for_input_streams
         continue
     elif [ $accept_cmd = "history" ]; then
         continue
     elif [ $accept_cmd = "trim" ]; then
-        sleep 0.5
+        wait_for_input_streams
         continue
     elif [ $accept_cmd = "editor" ]; then
 
