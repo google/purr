@@ -56,7 +56,7 @@ pick_serial() {
 
         # Checks whether there are any devices left that can be connected to.
         if [ $disconnected_count -eq $device_count ]; then
-            echo "All available devices are disconnected. Sleeping..." >> /dev/tty
+            echo "All available devices are disconnected. Waiting..." >> /dev/tty
             sleep 2
             __pick_serial_wait
 
@@ -278,7 +278,7 @@ __purr_cleanup() {
 
     # Send a message to the background threads that they need to die.
     if [ -f $purr_background_handler_cache ]; then
-        echo "cleanup" >> $purr_background_handler_cache && sleep 0.30
+        echo "cleanup" >> $purr_background_handler_cache
     fi
 
     # Delete all of the cached state files.
@@ -299,7 +299,6 @@ __purr_background_handler() {
         __purr_cleanup_streams
       elif [ $line = "start" ]; then
          __purr_start_streams
-         sleep 0.5
       elif [ $line = "cleanup" ]; then
          __purr_cleanup_streams
          exit 0
