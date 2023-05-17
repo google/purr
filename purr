@@ -260,12 +260,14 @@ __purr_print_instructions() {
     echo "\x1b[1;1m\x1b[1;4mNavigation\x1b[1;0m" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-s:\x1b[1;0m Enable Scroll Lock" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-j:\x1b[1;0m Toggle between Chronological and Relevance sort" >> $purr_instruction_cache
-    echo "  \x1b[1;1mCtrl-f:\x1b[1;0m Go to selected line." >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-f:\x1b[1;0m Go to selected line" >> $purr_instruction_cache
     echo "" >> $purr_instruction_cache
     echo "\x1b[1;1m\x1b[1;4mADB Controls\x1b[1;0m" >> $purr_instruction_cache
-    echo "  \x1b[1;1mCtrl-w:\x1b[1;0m Issues 'adb logcat -c' to wipe logs" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-w:\x1b[1;0m Issues 'adb logcat -c' to permanently wipe device logs" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-t:\x1b[1;0m Trims logs to the selected entries timestamp" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-alt-t:\x1b[1;0m Removes any applied trim" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-p:\x1b[1;0m Removes any applied trim" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-h:\x1b[1;0m In ADB command mode, attempts to get the help menu of a command" >> $purr_instruction_cache
     echo "  \x1b[1;1mEnter:\x1b[1;0m  In ADB command mode, execute the current query as:" >> $purr_instruction_cache
     echo "          'adb -s \$serial shell \$query'" >> $purr_instruction_cache
     echo "" >> $purr_instruction_cache
@@ -278,8 +280,8 @@ __purr_print_instructions() {
     echo "" >> $purr_instruction_cache
     echo "\x1b[1;1m\x1b[1;4mMisc.\x1b[1;0m" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-v:\x1b[1;0m Open selected line in text editor" >> $purr_instruction_cache
-    echo "  \x1b[1;1mCtrl-y:\x1b[1;0m Copy selected lines." >> $purr_instruction_cache
-    echo "  \x1b[1;1mTab:\x1b[1;0m Select multiple lines." >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-y:\x1b[1;0m Copy selected lines" >> $purr_instruction_cache
+    echo "  \x1b[1;1mTab:\x1b[1;0m Select multiple lines" >> $purr_instruction_cache
 }
 
 __purr_cleanup() {
@@ -496,7 +498,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.0.5"
+VERSION="1.1.0"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -718,6 +720,7 @@ default_command_suite="rebind(f1)\
 +rebind(ctrl-v)\
 +rebind(ctrl-y)\
 +unbind(enter)\
++unbind(ctrl-h)\
 +unbind(double-click)"
 
 # Bind: F1, show logcat error stream.
@@ -733,7 +736,7 @@ error_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+$default_command_suite"
+    ")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f1:$error_cmd")
 
@@ -750,7 +753,7 @@ warn_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+$default_command_suite"
+    ")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f2:$warn_cmd")
 
@@ -767,7 +770,7 @@ info_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+$default_command_suite"
+    ")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f3:$info_cmd")
 
@@ -784,7 +787,7 @@ verb_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+$default_command_suite"
+    ")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f4:$verb_cmd")
 
@@ -809,6 +812,7 @@ adb_command_suite="rebind(f1)\
 +rebind(ctrl-v)\
 +rebind(ctrl-y)\
 +rebind(enter)\
++rebind(ctrl-h)\
 +unbind(double-click)"
 
 # Bind: F6, open adb command mode.
@@ -824,9 +828,38 @@ adb_stream_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+hide-preview+$adb_command_suite"
+    ")+first+disable-search+hide-preview+$adb_command_suite"
 )
 bind_commands+=('--bind' "f6:$adb_stream_cmd")
+
+# Bind: Ctrl-h, ask for help in ADB command mode.
+adb_help_cmd=(
+    'execute-silent('
+        '{'
+            $set_stream_adb
+            $set_header_adb
+            $set_slock_off
+        '} &'
+        "serial=\$(cat $purr_serial_cache);"
+        'query={q};'
+        'for string in "--help" "-h" "help"; do'
+            'adb_help=$( { eval "adb -s $serial shell $query $string" } 2>&1 );'
+            'ret=$?;'
+            # We are trying best-guesses on what a help prompt might look like here. There isn't
+            # a standard for shell commands, so we're going to try the most common ones, and we 
+            # assume that if a request returns a bunch of lines, maybe it's just dumping help.
+            'if { [ $ret -eq 0 ] && [ ! -s $adb_help ] } || [ $(wc -l <<< $adb_help) -ge 15 ]; then'
+                "echo \"Ran \\\"adb -s \$serial shell \$query \$string\\\"\"  > $purr_adb_cache;"
+                "echo \$adb_help >> $purr_adb_cache;"
+                "exit;"
+            'fi;'
+        'done;'
+        "echo \"Could not find help for \\\"\$query\\\"\" >> $purr_adb_cache;"
+    ')+reload('
+        $load_input_stream
+    ')+disable-search'
+)
+bind_commands+=('--bind' "ctrl-h:$adb_help_cmd")
 
 # Bind: ctrl-s, stop stream and show input cache.
 stop_cmd=(
@@ -968,6 +1001,7 @@ history_command_suite="rebind(f1)\
 +unbind(ctrl-v)\
 +unbind(ctrl-y)\
 +rebind(enter)\
++unbind(ctrl-h)\
 +unbind(double-click)"
 serial_command_suite="$history_command_suite"
 
@@ -983,7 +1017,7 @@ serial_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+hide-preview+$serial_command_suite"
+    ")+first+enable-search+hide-preview+$serial_command_suite"
 )
 bind_commands+=('--bind' "f5:$serial_cmd")
 
@@ -1075,7 +1109,7 @@ history_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+clear-query+first+$history_command_suite"
+    ")+clear-query+first+enable-search+$history_command_suite"
 )
 bind_commands+=('--bind' "ctrl-r:$history_cmd")
 
