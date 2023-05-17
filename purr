@@ -519,6 +519,11 @@ if ! __purr_check_env; then
     exit 50
 fi
 
+# We need to use zsh for all commands within purr, including fzf commands. Since fzf
+# grabs the SHELL from the environment variable, we need to make sure it's pointing to
+# zsh for compatibility.
+SHELL=$(which zsh)
+
 # Create the directory our cache file will live.
 rand_prefix=$(cat /dev/urandom | LC_ALL=C /usr/bin/tr -cd 'a-f0-9' | /usr/bin/head -c 8)
 cur_time=$(($(date +%s) * 1000))
