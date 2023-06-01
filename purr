@@ -487,6 +487,8 @@ fi
 # we are sending TTY output, which makes fzf unhappy. 
 if command -v pbcopy &> /dev/null && [ -z $SSH_TTY ]; then
     pbcopy_purr="$(which pbcopy)"
+elif command -v wl-copy &> /dev/null && [ $XDG_SESSION_TYPE = "wayland" ]; then
+    pbcopy_purr="wl-copy"
 elif command -v xsel &> /dev/null && [ ! -z $DISPLAY ]; then
     pbcopy_purr="xsel --clipboard --input"
 elif command -v purr_osc52_copy &> /dev/null; then
