@@ -471,7 +471,7 @@ elif [ $(uname -s) = "Darwin" ]; then
         fzf_purr="purr_fzf_darwin_amd64"
     fi
 elif [ $(uname -s) = "Linux" ]; then
-    if [ $(arch) = "x86_64" ]; then
+    if [ $(uname -m) = "x86_64" ]; then
         fzf_purr="purr_fzf_linux_x86_64"
     fi
 fi
