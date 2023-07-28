@@ -21,7 +21,7 @@
 #   61 - Could not get a serial number.
 
 timeout() {
-    perl -e 'alarm shift; exec @ARGV' "$@"
+    PERL_BADLANG=0 perl -e 'alarm shift; exec @ARGV' "$@"
 }
 
 wait_for_file() {
@@ -501,7 +501,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
