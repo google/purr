@@ -78,7 +78,7 @@ The following hotkeys can be used:
 * Tab: Select a line. Multiple lines can be selected simultaneously.
 * Ctrl-y: Yanks selected lines into the system clipboard.
 * Ctrl-v: Opens the text editor; see below.
-* Ctrl-\: Prints some basic device information into the system clipboard, and starts a background process to capture a bug report. The bug report is saved to /tmp/bugreport-$target-$device-$sdk-$date
+* Ctrl-\\: Prints some basic device information into the system clipboard, and starts a background process to capture a bug report. The bug report is saved to /tmp/bugreport-$target-$device-$sdk-$date
 
 #### History
 `purr` saves a query string to history once it has not been changed for more than 3.5 seconds. You can use the following hotkeys to access history:
