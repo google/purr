@@ -501,7 +501,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -1192,7 +1192,7 @@ history_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+clear-query+first+enable-search+$history_command_suite"
+    ")+clear-query+first+hide-preview+enable-search+$history_command_suite"
 )
 bind_commands+=('--bind' "ctrl-r:$history_cmd")
 
