@@ -262,6 +262,8 @@ __purr_print_instructions() {
     echo "  \x1b[1;1mCtrl-s:\x1b[1;0m Enable Scroll Lock" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-j:\x1b[1;0m Toggle between Chronological and Relevance sort" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-f:\x1b[1;0m Go to selected line" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-alt-s:\x1b[1;0m Add selected lines tag to the query" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-alt-d:\x1b[1;0m Remove selected lines tag to the query, or adds inverse tag if it doesn't exist" >> $purr_instruction_cache
     echo "" >> $purr_instruction_cache
     echo "\x1b[1;1m\x1b[1;4mADB Controls\x1b[1;0m" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-w:\x1b[1;0m Issues 'adb logcat -c' to permanently wipe device logs" >> $purr_instruction_cache
