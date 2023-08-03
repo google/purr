@@ -251,6 +251,7 @@ __purr_print_instructions() {
     echo "  \x1b[1;1mCtrl-r:\x1b[1;0m Show the history menu" >> $purr_instruction_cache
     echo "" >> $purr_instruction_cache
     echo "\x1b[1;1m\x1b[1;4mPreview\x1b[1;0m" >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-p:\x1b[1;0m Toggles the preview window on/off" >> $purr_instruction_cache
     echo "  \x1b[1;1mF7:\x1b[1;0m Shows the instruction preview" >> $purr_instruction_cache
     echo "  \x1b[1;1mF9:\x1b[1;0m Shows line context in the current stream" >> $purr_instruction_cache
     echo "  \x1b[1;1mF10:\x1b[1;0m Shows line context in the verbose stream" >> $purr_instruction_cache
@@ -266,7 +267,6 @@ __purr_print_instructions() {
     echo "  \x1b[1;1mCtrl-w:\x1b[1;0m Issues 'adb logcat -c' to permanently wipe device logs" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-t:\x1b[1;0m Trims logs to the selected entries timestamp" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-alt-t:\x1b[1;0m Removes any applied trim" >> $purr_instruction_cache
-    echo "  \x1b[1;1mCtrl-p:\x1b[1;0m Removes any applied trim" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-h:\x1b[1;0m In ADB command mode, attempts to get the help menu of a command" >> $purr_instruction_cache
     echo "  \x1b[1;1mEnter:\x1b[1;0m  In ADB command mode, execute the current query as:" >> $purr_instruction_cache
     echo "          'adb -s \$serial shell \$query'" >> $purr_instruction_cache
