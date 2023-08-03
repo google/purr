@@ -501,7 +501,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.1.4"
+VERSION="1.2.0"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -787,6 +787,8 @@ default_command_suite="rebind(f1)\
 +rebind(tab)\
 +rebind(ctrl-v)\
 +rebind(ctrl-y)\
++rebind(ctrl-alt-s)\
++rebind(ctrl-alt-d)\
 +unbind(enter)\
 +unbind(ctrl-h)\
 +unbind(double-click)"
@@ -881,6 +883,8 @@ adb_command_suite="rebind(f1)\
 +rebind(ctrl-y)\
 +rebind(enter)\
 +rebind(ctrl-h)\
++unbind(ctrl-alt-s)\
++unbind(ctrl-alt-d)\
 +unbind(double-click)"
 
 # Bind: F6, open adb command mode.
@@ -928,6 +932,46 @@ adb_help_cmd=(
     ')+disable-search'
 )
 bind_commands+=('--bind' "ctrl-h:$adb_help_cmd")
+
+# Bind: ctrl-alt-s, get tag from line and add it to query.
+get_tag_cmd=(
+    'execute-silent('
+        'tag=$(echo "{}" | xargs | xargs | cut -d" " -f6);'
+        'cur_query=$(echo "{q}" | xargs | xargs);'
+        'if echo $cur_query | /usr/bin/grep -w -q -- "$tag"; then'
+            "echo \"\$cur_query\" > $purr_query_cache;"
+        'elif [ -z $cur_query ]; then'
+            "echo \"\$tag\" > $purr_query_cache;"
+        'else;'
+            "echo \"\$cur_query \$tag\" > $purr_query_cache;"
+        'fi;'
+    ')+transform-query('
+        "cat $purr_query_cache;"
+        "echo "" > $purr_query_cache;"
+    ')'
+)
+bind_commands+=('--bind' "ctrl-alt-s:$get_tag_cmd")
+
+# Bind: ctrl-alt-d, get tag from line and add it as negative query.
+remove_tag_cmd=(
+    'execute-silent('
+        'tag=$(echo "{}" | xargs | xargs | cut -d" " -f6);'
+        'negative_tag="!$tag";'
+        'cur_query=$(echo "{q}" | xargs | xargs);'
+        'if echo $cur_query | /usr/bin/grep -w -q -- "$tag"; then'
+            'untagged_query=$(echo "$cur_query" | /usr/bin/sed "s/\b$tag\b//g" | /usr/bin/sed "s/\b$tag//g" | xargs);'
+            "echo \"\$untagged_query\" > $purr_query_cache;"
+        'elif [ -z $cur_query ]; then'
+            "echo \"\$negative_tag\" > $purr_query_cache;"
+        'else;'
+            "echo \"\$cur_query \$negative_tag\" > $purr_query_cache;"
+        'fi;'
+    ')+transform-query('
+        "cat $purr_query_cache;"
+        "echo "" > $purr_query_cache;"
+    ')'
+)
+bind_commands+=('--bind' "ctrl-alt-d:$remove_tag_cmd")
 
 # Bind: ctrl-s, stop stream and show input cache.
 stop_cmd=(
@@ -1085,6 +1129,8 @@ history_command_suite="rebind(f1)\
 +unbind(ctrl-y)\
 +rebind(enter)\
 +unbind(ctrl-h)\
++unbind(ctrl-alt-s)\
++unbind(ctrl-alt-d)\
 +unbind(double-click)"
 serial_command_suite="$history_command_suite"
 

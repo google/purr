@@ -68,6 +68,8 @@ The following hotkeys can be used:
 * Ctrl-s: Enables scroll lock. While in scroll lock mode, your cursor will remain bound to the selected item as long as it remains in the search filter.
 * Ctrl-f: Shorthand for enabling scroll lock and clearing the query. This allows you to go to the surrounding context of a selected item. Scroll lock will end once you move your cursor.
 * Ctrl-j: Changes search modes between Chronological (default) and Relevance. This may be useful for fuzzy queries.
+* Ctrl-alt-s: Adds the selected tag to your query. If the tag already exists in your query, do nothing.
+* Ctrl-alt-d: Adds the inverse of the selected tag to your query. If the tag already exists in your query, remove it instead. Note that the inverse of the selected tag may also match non-tag lines in your log output.
 
 #### ADB Shorthands
 * Ctrl-t: Trims the logs to any logs after the currently selected items. Useful if attempting to isolate a specific issue after a certain point.
