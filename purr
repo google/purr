@@ -503,7 +503,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.0"
+VERSION="1.2.1"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -706,7 +706,7 @@ current_hint_preview_command=$(cat <<-END
                 echo "";
             done;
         fi
-        /usr/bin/head $purr_input_cache -n \$line_number_above -q | /usr/bin/tail -n 200 -q;
+        /usr/bin/head -n \$line_number_above $purr_input_cache  | /usr/bin/tail -n 200 -q;
         if [ "\$line_count" -ne 1 ]; then
             echo "----------------";
             echo "Seeing multiple exact matches; highlighting first instance."
@@ -714,11 +714,11 @@ current_hint_preview_command=$(cat <<-END
             echo "Duplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
             echo "----------------";
         fi
-        /usr/bin/head $purr_input_cache -n \$unique_line_number -q | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
+        /usr/bin/head -n \$unique_line_number $purr_input_cache | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
         if [ "\$line_number_below" -ge "\$line_number_below_max" ]; then
-            /usr/bin/head $purr_input_cache -n \$line_number_below_max -q | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
+            /usr/bin/head -n \$line_number_below_max $purr_input_cache | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
         else;
-            /usr/bin/head $purr_input_cache -n \$line_number_below -q | /usr/bin/tail -n 200 -q;
+            /usr/bin/head -n \$line_number_below $purr_input_cache | /usr/bin/tail -n 200 -q;
         fi
     fi;
 END
@@ -735,7 +735,7 @@ verbose_hint_preview_command=$(cat <<-END
         line_number_above=\$((unique_line_number-1));
         line_number_below=\$((unique_line_number+200));
         line_number_below_max=\$(wc -l < $purr_verbose_input_cache);
-        /usr/bin/head $purr_verbose_input_cache -n \$line_number_above -q | /usr/bin/tail -n 200 -q;
+        /usr/bin/head -n \$line_number_above $purr_verbose_input_cache | /usr/bin/tail -n 200 -q;
         if [ "\$unique_line_number" -le 200 ]; then
             for i in {1..\$((201 - unique_line_number))}; do
                 echo "";
@@ -748,11 +748,11 @@ verbose_hint_preview_command=$(cat <<-END
             echo "Duplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
             echo "----------------";
         fi
-        /usr/bin/head $purr_verbose_input_cache -n \$unique_line_number -q | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
+        /usr/bin/head -n \$unique_line_number $purr_verbose_input_cache | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
         if [ "\$line_number_below" -ge "\$line_number_below_max" ]; then
-            /usr/bin/head $purr_verbose_input_cache -n \$line_number_below_max -q | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
+            /usr/bin/head -n \$line_number_below_max $purr_verbose_input_cache | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
         else;
-            /usr/bin/head $purr_verbose_input_cache -n \$line_number_below -q | /usr/bin/tail -n 200 -q;
+            /usr/bin/head -n \$line_number_below $purr_verbose_input_cache | /usr/bin/tail -n 200 -q;
         fi
     fi;
 END
