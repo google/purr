@@ -503,7 +503,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.1"
+VERSION="1.2.2"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -691,69 +691,154 @@ bind_commands+=('--bind' "F7:$hint_preview")
 # Preview: Highlights selected line, and shows 200 lines of context around it.
 # Bind: F9/10 for current/verbose stream, respectively.
 current_hint_preview_command=$(cat <<-END
+    # Grab the line number from the input cache. This may not be unique if multiple lines are exact matches.
     line_number="\$(/usr/bin/grep -F -n -- {} $purr_input_cache | cut -d':' -f1)";
-    line_count="\$(/usr/bin/wc -l <<< "\$line_number")";
+
     if [ -z "\$line_number" ]; then
         echo "Could not identify selected line in input buffer!";
         echo "This should never happen; please report me as a bug!";
     else;
-        unique_line_number="\$(/usr/bin/head -n 1 <<< "\$line_number")";
-        line_number_above=\$((unique_line_number-1));
-        line_number_below=\$((unique_line_number+200));
-        line_number_below_max=\$(wc -l < $purr_input_cache);
-        if [ "\$unique_line_number" -le 200 ]; then
-            for i in {1..\$((201 - unique_line_number))}; do
-                echo "";
+
+        # Get only the first line to display.
+        first_line_number="\$(/usr/bin/head -n 1 <<< "\$line_number")";
+
+        # Get the number of lines in the input file for pointer math!
+        lines_in_input_file="\$(/usr/bin/wc -l $purr_input_cache | xargs | cut -d' ' -f1)";
+
+        # Get the lines we need to put into the preview file.
+        line_number_min=\$((first_line_number-200));
+        line_number_max=\$((first_line_number+200));
+
+        # Try not to overflow from the input file.
+        if [ \$line_number_max -ge \$lines_in_input_file ]; then
+            line_number_max=\$lines_in_input_file;
+        fi;
+
+        # Try not to underflow from the input file.
+        if [ \$line_number_min -le 0 ]; then
+            pad_top_number=\$((200 - first_line_number))
+            line_number_min=0;
+        fi;
+
+        # Get the number we need to tail for.
+        tail_line_numbers=\$((\$line_number_max - \$line_number_min));
+
+        # Get the lines that need to be printed from the input cache.
+        full_lines=\$(/usr/bin/head -n \$line_number_max $purr_input_cache  | /usr/bin/tail -n \$tail_line_numbers -q;);
+
+        # If we don't have enough lines on the top, we'll pad with new lines so that
+        # fzf can still send us to above the correct line in the preview.
+        if [ ! -z "\$pad_top_number" ]; then
+            for i in {1..\$pad_top_number}; do
+                padding_string="\$padding_string\n";
             done;
-        fi
-        /usr/bin/head -n \$line_number_above $purr_input_cache  | /usr/bin/tail -n 200 -q;
-        if [ "\$line_count" -ne 1 ]; then
-            echo "----------------";
-            echo "Seeing multiple exact matches; highlighting first instance."
-            echo "First Instance on line \$unique_line_number";
-            echo "Duplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
-            echo "----------------";
-        fi
-        /usr/bin/head -n \$unique_line_number $purr_input_cache | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
-        if [ "\$line_number_below" -ge "\$line_number_below_max" ]; then
-            /usr/bin/head -n \$line_number_below_max $purr_input_cache | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
-        else;
-            /usr/bin/head -n \$line_number_below $purr_input_cache | /usr/bin/tail -n 200 -q;
-        fi
+            full_lines="\$padding_string""\$full_lines";
+        fi;
+
+        # Start building the preview. We need to do this piecemeal to make sure we can 
+        # highlight the relevant lines.
+        preview_top=\$(echo \$full_lines | /usr/bin/head -n 199);
+
+        # Since we aren't guarenteed that the selected line is unique, let's tell the user so 
+        # they understand why the line might seem different.
+        if [ "\$(/usr/bin/wc -l <<< "\$line_number")" -ne 1 ]; then
+            info_panel="\\n----------------";
+            info_panel+="\\nSeeing multiple exact matches; highlighting first instance."
+            info_panel+="\\nFirst Instance on line \$first_line_number";
+            info_panel+="\\nDuplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
+            info_panel+="\\n----------------";
+        fi;
+
+        # Highlight the line the user selected.
+        highlighted_line="\$(echo -- \$full_lines | /usr/bin/head -n 200 -- | /usr/bin/tail -n 1 -q -- | cat -v -- | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g")";
+
+        # We might not have lines at the bottom to print, so we need to check
+        # how big the padded buffer is.
+        full_lines_size=\$(echo \$full_lines | /usr/bin/wc -l);
+        bottom_line_numbers=\$((\$full_lines_size - 200));
+
+        # Load in the bottom of the preview.
+        preview_bottom=\$(echo \$full_lines | /usr/bin/tail -n \$bottom_line_numbers);
+
+        # Construct and print the preview.
+        constructed_preview="\$preview_top\$info_panel\\n\$highlighted_line\\n\$preview_bottom";
+        echo "\$constructed_preview";
     fi;
 END
 )
 
 verbose_hint_preview_command=$(cat <<-END
+    # Grab the line number from the input cache. This may not be unique if multiple lines are exact matches.
     line_number="\$(/usr/bin/grep -F -n -- {} $purr_verbose_input_cache | cut -d':' -f1)";
-    line_count="\$(/usr/bin/wc -l <<< "\$line_number")";
+
     if [ -z "\$line_number" ]; then
         echo "Could not identify selected line in input buffer!";
         echo "This should never happen; please report me as a bug!";
     else;
-        unique_line_number="\$(/usr/bin/head -n 1 <<< "\$line_number")";
-        line_number_above=\$((unique_line_number-1));
-        line_number_below=\$((unique_line_number+200));
-        line_number_below_max=\$(wc -l < $purr_verbose_input_cache);
-        /usr/bin/head -n \$line_number_above $purr_verbose_input_cache | /usr/bin/tail -n 200 -q;
-        if [ "\$unique_line_number" -le 200 ]; then
-            for i in {1..\$((201 - unique_line_number))}; do
-                echo "";
+        # Get only the first line to display.
+        first_line_number="\$(/usr/bin/head -n 1 <<< "\$line_number")";
+
+        # Get the number of lines in the input file for pointer math!
+        lines_in_input_file="\$(/usr/bin/wc -l $purr_verbose_input_cache | xargs | cut -d' ' -f1)";
+
+        # Get the lines we need to put into the preview file.
+        line_number_min=\$((first_line_number-200));
+        line_number_max=\$((first_line_number+200));
+
+        # Try not to overflow from the input file.
+        if [ \$line_number_max -ge \$lines_in_input_file ]; then
+            line_number_max=\$lines_in_input_file;
+        fi;
+
+        # Try not to underflow from the input file.
+        if [ \$line_number_min -le 0 ]; then
+            pad_top_number=\$((200 - first_line_number))
+            line_number_min=0;
+        fi;
+
+        # Get the number we need to tail for.
+        tail_line_numbers=\$((\$line_number_max - \$line_number_min));
+
+        # Get the lines that need to be printed from the input cache.
+        full_lines=\$(/usr/bin/head -n \$line_number_max $purr_verbose_input_cache  | /usr/bin/tail -n \$tail_line_numbers -q;);
+
+        # If we don't have enough lines on the top, we'll pad with new lines so that
+        # fzf can still send us to above the correct line in the preview.
+        if [ ! -z "\$pad_top_number" ]; then
+            for i in {1..\$pad_top_number}; do
+                padding_string="\$padding_string\n";
             done;
-        fi
-        if [ "\$line_count" -ne 1 ]; then
-            echo "----------------";
-            echo "Seeing multiple exact matches; highlighting first instance."
-            echo "First Instance on line \$unique_line_number";
-            echo "Duplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
-            echo "----------------";
-        fi
-        /usr/bin/head -n \$unique_line_number $purr_verbose_input_cache | /usr/bin/tail -n 1 -q | cat -v | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g";
-        if [ "\$line_number_below" -ge "\$line_number_below_max" ]; then
-            /usr/bin/head -n \$line_number_below_max $purr_verbose_input_cache | /usr/bin/tail -n \$((line_number_below - line_number_below_max - 200)) -q;
-        else;
-            /usr/bin/head -n \$line_number_below $purr_verbose_input_cache | /usr/bin/tail -n 200 -q;
-        fi
+            full_lines="\$padding_string""\$full_lines";
+        fi;
+
+        # Start building the preview. We need to do this piecemeal to make sure we can 
+        # highlight the relevant lines.
+        preview_top=\$(echo \$full_lines | /usr/bin/head -n 199);
+
+        # Since we aren't guarenteed that the selected line is unique, let's tell the user so 
+        # they understand why the line might seem different.
+        if [ "\$(/usr/bin/wc -l <<< "\$line_number")" -ne 1 ]; then
+            info_panel="\\n----------------";
+            info_panel+="\\nSeeing multiple exact matches; highlighting first instance."
+            info_panel+="\\nFirst Instance on line \$first_line_number";
+            info_panel+="\\nDuplicates on line(s) \$(echo \$line_number | /usr/bin/tail -n +2 | /usr/bin/tr '\n' ' ')";
+            info_panel+="\\n----------------";
+        fi;
+
+        # Highlight the line the user selected.
+        highlighted_line="\$(echo -- \$full_lines | /usr/bin/head -n 200 -- | /usr/bin/tail -n 1 -q -- | cat -v -- | /usr/bin/sed -e "s/\^\[\[[0-9;]*m/\x1b[1;36m/g")";
+
+        # We might not have lines at the bottom to print, so we need to check
+        # how big the padded buffer is.
+        full_lines_size=\$(echo \$full_lines | /usr/bin/wc -l);
+        bottom_line_numbers=\$((\$full_lines_size - 200));
+
+        # Load in the bottom of the preview.
+        preview_bottom=\$(echo \$full_lines | /usr/bin/tail -n \$bottom_line_numbers);
+
+        # Construct and print the preview.
+        constructed_preview="\$preview_top\$info_panel\\n\$highlighted_line\\n\$preview_bottom";
+        echo "\$constructed_preview";
     fi;
 END
 )
