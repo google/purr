@@ -173,6 +173,14 @@ __purr_create_files() {
     purr_connection_state_cache="$dir_name/connection-state.purr"
     /usr/bin/touch $purr_connection_state_cache
 
+    # File to use to keep track of the state of the fzf preview window's visibility.
+    purr_preview_visible_cache="$dir_name/preview-visibility-cache.purr"
+    /usr/bin/touch $purr_preview_visible_cache
+
+    # File to use to keep track of the state of the fzf preview window's command.
+    purr_preview_command_cache="$dir_name/preview-command-cache.purr"
+    /usr/bin/touch $purr_preview_command_cache
+
     # File to communicate with the background handler.
     purr_background_handler_cache="$dir_name/background-handler-IO.purr"
     /usr/bin/touch $purr_background_handler_cache
@@ -503,7 +511,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.2"
+VERSION="1.2.3"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -685,8 +693,10 @@ bind_commands=()
 # Bind: F7, set preview to the instruction menu..
 instruction_preview_command="cat $purr_instruction_cache"
 instruction_preview_window="right,50%,nohidden,nofollow,wrap,<55(up,50%,nohidden,nofollow,wrap)"
+instruction_preview_window_hidden="right,50%,hidden,nofollow,wrap,<55(up,50%,hidden,nofollow,wrap)"
 hint_preview=("change-preview($instruction_preview_command)+change-preview-window($instruction_preview_window)+refresh-preview")
-bind_commands+=('--bind' "F7:$hint_preview")
+bind_commands+=('--bind' "F7:$hint_preview\
++execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'instruction' >| $purr_preview_command_cache)")
 
 # Preview: Highlights selected line, and shows 200 lines of context around it.
 # Bind: F9/10 for current/verbose stream, respectively.
@@ -844,13 +854,22 @@ END
 )
 
 hint_preview_window="top,70%,nohidden,wrap,+200/2"
+hint_preview_window_hidden="top,70%,hidden,wrap,+200/2"
 
-bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-window($hint_preview_window)+refresh-preview")
-bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-window($hint_preview_window)+refresh-preview")
+bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-window($hint_preview_window)\
++refresh-preview+execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'current' >| $purr_preview_command_cache)")
+bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-window($hint_preview_window)\
++refresh-preview+execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'verbose' >| $purr_preview_command_cache)")
 
 # Preview: Highlights selected line, and shows 200 lines of context around it in the selected input stream.
 # Bind: Ctrl-P, toggle preview on/off.
-bind_commands+=('--bind' "ctrl-p:toggle-preview")
+bind_commands+=('--bind' "ctrl-p:toggle-preview+execute-silent(\
+if [ \$(cat $purr_preview_visible_cache) = 'nohidden' ]; then;\
+    echo 'hidden' >| $purr_preview_visible_cache;\
+else;\
+    echo 'nohidden' >| $purr_preview_visible_cache;\
+fi\
+)")
 
 # List of keys to bind when we load an input stream. We want to unbind these keys when we go to a non-input stream,
 # like history. Otherwise, we start getting undefined behaviors.
@@ -987,7 +1006,7 @@ adb_stream_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+disable-search+hide-preview+$adb_command_suite"
+    ")+first+disable-search+hide-preview+$adb_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "f6:$adb_stream_cmd")
 
@@ -1123,7 +1142,7 @@ untrim_cmd=(
 bind_commands+=('--bind' "ctrl-alt-t:$untrim_cmd")
 
 # Bind: ctrl-f, brings the user to the currently selected entry.
-bind_commands+=('--bind' "ctrl-f:track+clear-query+hide-preview")
+bind_commands+=('--bind' "ctrl-f:track+clear-query+hide-preview+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)")
 
 # Bind: ctrl-j, toggle chronological/relevance sort.
 cmd_sort=(
@@ -1233,7 +1252,7 @@ serial_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+first+enable-search+hide-preview+$serial_command_suite"
+    ")+first+enable-search+hide-preview+$serial_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "f5:$serial_cmd")
 
@@ -1325,7 +1344,7 @@ history_cmd=(
         $load_input_stream
     ")+transform-header("
         $load_generic_header
-    ")+clear-query+first+hide-preview+enable-search+$history_command_suite"
+    ")+clear-query+first+hide-preview+enable-search+$history_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "ctrl-r:$history_cmd")
 
@@ -1391,18 +1410,35 @@ echo $slock_off_msg >| $purr_slock_cache
 echo $sorting_chronological >| $purr_sort_header_cache
 echo "/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache $teecmd" >| $purr_input_stream_cache
 
-# Sets the instruction window to be open by default.
-if [ "$instruction_flag" = "true" ]; then
-    local instruction_preview=("--preview"
-    "$instruction_preview_command" 
+local instruction_preview_starter=("--preview"
+    "$instruction_preview_command"
     "--preview-window"
-    "right,50%:nohidden:nofollow:wrap,<55(up,50%:nohidden:nofollow:wrap)")
-else
-    local instruction_preview=("--preview"
-    "$verbose_hint_preview_command" 
+    "$instruction_preview_window")
+
+local current_hint_preview_starter=("--preview"
+    "$current_hint_preview_command"
     "--preview-window"
-    "top,hidden,70%,wrap,+200/2")
-fi
+    "$hint_preview_window")
+
+local verbose_hint_preview_starter=("--preview"
+    "$verbose_hint_preview_command"
+    "--preview-window"
+    "$hint_preview_window")
+
+local instruction_preview_starter_hidden=("--preview"
+    "$instruction_preview_command"
+    "--preview-window"
+    "$instruction_preview_window_hidden")
+
+local current_hint_preview_starter_hidden=("--preview"
+    "$current_hint_preview_command"
+    "--preview-window"
+    "$hint_preview_window_hidden")
+
+local verbose_hint_preview_starter_hidden=("--preview"
+    "$verbose_hint_preview_command"
+    "--preview-window"
+    "$hint_preview_window_hidden")
 
 initial_pos_argument=""
 
@@ -1466,12 +1502,43 @@ EOF
         start_command=('--bind' "start:transform-header($load_generic_header)+$default_command_suite")
     fi
 
+    prev_preview=$(cat $purr_preview_command_cache)
+    prev_preview_vis=$(cat $purr_preview_visible_cache)
+
+    if [ "$prev_preview" = "instruction" ]; then
+        if [ "$prev_preview_vis" = "hidden" ]; then
+            local starter_preview_command=($instruction_preview_starter_hidden)
+        elif [ "$prev_preview_vis" = "nohidden" ]; then
+            local starter_preview_command=($instruction_preview_starter)
+        fi
+    elif [ "$prev_preview" = "verbose" ]; then
+        if [ "$prev_preview_vis" = "hidden" ]; then
+            local starter_preview_command=($verbose_hint_preview_starter_hidden)
+        elif [ "$prev_preview_vis" = "nohidden" ]; then
+            local starter_preview_command=($verbose_hint_preview_starter)
+        fi
+    elif [ "$prev_preview" = "current" ]; then
+        if [ "$prev_preview_vis" = "hidden" ]; then
+            local starter_preview_command=($current_hint_preview_starter_hidden)
+        elif [ "$prev_preview_vis" = "nohidden" ]; then
+            local starter_preview_command=($current_hint_preview_starter)
+        fi
+    elif [ $instruction_flag = "true" ]; then
+        local starter_preview_command=($instruction_preview_starter)
+        echo "instruction" > $purr_preview_command_cache
+        echo "nohidden" > $purr_preview_visible_cache
+    else
+        local starter_preview_command=($verbose_hint_preview_starter_hidden)
+        echo "verbose" > $purr_preview_command_cache
+        echo "hidden" > $purr_preview_visible_cache
+    fi
+
     # Starts and runs the actual fzf process.
     if [ ! -z $cached_query ]; then
-        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" $fzf_purr $instruction_preview $fzfp $fzf_prompt $bind_commands $start_command --query=$cached_query)
+        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" $fzf_purr $starter_preview_command $fzfp $fzf_prompt $bind_commands $start_command --query=$cached_query)
         ret=$?
     else
-        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" $fzf_purr $instruction_preview $fzfp $fzf_prompt $bind_commands $start_command)
+        accepted=$(FZF_DEFAULT_COMMAND="$defcmd" $fzf_purr $starter_preview_command $fzfp $fzf_prompt $bind_commands $start_command)
         ret=$?
     fi
 
