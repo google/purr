@@ -503,7 +503,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.4"
+VERSION="1.2.5"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -686,7 +686,7 @@ bind_commands=()
 instruction_preview_command="cat $purr_instruction_cache"
 instruction_preview_window="right,50%,nohidden,nofollow,wrap,<55(up,50%,nohidden,nofollow,wrap)"
 instruction_preview_window_hidden="right,50%,hidden,nofollow,wrap,<55(up,50%,hidden,nofollow,wrap)"
-hint_preview=("change-preview($instruction_preview_command)+change-preview-window($instruction_preview_window)+refresh-preview")
+hint_preview=("change-preview($instruction_preview_command)+change-preview-window($instruction_preview_window)+change-preview-label()+refresh-preview")
 bind_commands+=('--bind' "F7:$hint_preview\
 +execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'instruction' >| $purr_preview_command_cache)")
 
@@ -848,9 +848,11 @@ END
 hint_preview_window="top,70%,nohidden,wrap,+200/2"
 hint_preview_window_hidden="top,70%,hidden,wrap,+200/2"
 
-bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-window($hint_preview_window)\
+bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-label(Current Stream)\
++change-preview-window($hint_preview_window)\
 +refresh-preview+execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'current' >| $purr_preview_command_cache)")
-bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-window($hint_preview_window)\
+bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-label(Verbose Stream)\
++change-preview-window($hint_preview_window)\
 +refresh-preview+execute-silent(echo 'nohidden' >| $purr_preview_visible_cache; echo 'verbose' >| $purr_preview_command_cache)")
 
 # Preview: Highlights selected line, and shows 200 lines of context around it in the selected input stream.
@@ -1410,12 +1412,16 @@ local instruction_preview_starter=("--preview"
 local current_hint_preview_starter=("--preview"
     "$current_hint_preview_command"
     "--preview-window"
-    "$hint_preview_window")
+    "$hint_preview_window"
+    "--preview-label"
+    "Current Stream")
 
 local verbose_hint_preview_starter=("--preview"
     "$verbose_hint_preview_command"
     "--preview-window"
-    "$hint_preview_window")
+    "$hint_preview_window"
+    "--preview-label"
+    "Verbose Stream")
 
 local instruction_preview_starter_hidden=("--preview"
     "$instruction_preview_command"
@@ -1425,12 +1431,16 @@ local instruction_preview_starter_hidden=("--preview"
 local current_hint_preview_starter_hidden=("--preview"
     "$current_hint_preview_command"
     "--preview-window"
-    "$hint_preview_window_hidden")
+    "$hint_preview_window_hidden"
+    "--preview-label"
+    "Current Stream")
 
 local verbose_hint_preview_starter_hidden=("--preview"
     "$verbose_hint_preview_command"
     "--preview-window"
-    "$hint_preview_window_hidden")
+    "$hint_preview_window_hidden"
+    "--preview-label"
+    "Verbose Stream")
 
 initial_pos_argument=""
 
