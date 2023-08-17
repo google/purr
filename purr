@@ -101,26 +101,18 @@ pick_serial() {
 }
 
 __pick_serial_wait() {
-    local serial=$1
+    if [ ! -z $1 ]; then
+        local serial_stmt="-s $1"
+    fi
 
     # See if any devices are immediately connected before printing a connect message.
-    if [ -z $serial ]; then
-        timeout 1 "adb wait-for-device" 2> /dev/null
-        ret=$?
-    else
-        timeout 1 "adb -s $serial wait-for-device" 2> /dev/null
-        ret=$?
-    fi
+    timeout 1 "adb $serial_stmt wait-for-device" 2> /dev/null
+    ret=$?
     
     # If we can't find any immediate connections, go into a longer waiting period.
     if [ $ret -eq 124 ] || [ $ret -eq 142 ]; then
-        if [ -z $serial ]; then
-            echo "Waiting on a device to connect..." > /dev/tty
-            adb wait-for-device
-        else
-            echo "Waiting for $serial to connect..." > /dev/tty
-            adb -s $serial wait-for-device
-        fi
+        echo "Waiting on a device to connect..." > /dev/tty
+        adb $serial_stmt wait-for-device
         echo "Device connected." > /dev/tty
     fi
 }
@@ -511,7 +503,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.3"
+VERSION="1.2.4"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
