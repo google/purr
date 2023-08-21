@@ -185,11 +185,26 @@ __purr_create_files() {
     purr_time_start_cache="$dir_name/purr_time_start_cache.purr"
     /usr/bin/touch $purr_time_start_cache
 
+    purr_unique_cache="$dir_name/purr_unique_cache.purr"
+    /usr/bin/touch $purr_unique_cache
+
     # Files to input cache the streams into.
     purr_error_input_cache="$dir_name/error-input-cache.purr"
     purr_warning_input_cache="$dir_name/warning-input-cache.purr"
     purr_info_input_cache="$dir_name/info-input-cache.purr"
     purr_verbose_input_cache="$dir_name/verbose-input-cache.purr"
+
+    # Files to input cache the unique version of the streams into.
+    purr_error_unique_checksum_cache="$dir_name/error-unique-checksum-cache.purr"
+    purr_warning_unique_checksum_cache="$dir_name/warning-unique-checksum-cache.purr"
+    purr_info_unique_checksum_cache="$dir_name/info-unique-checksum-cache.purr"
+    purr_verbose_unique_checksum_cache="$dir_name/verbose-unique-checksum-cache.purr"
+
+    # Files to input cache the unique version of the streams into.
+    purr_error_input_cache_unique="$dir_name/error-unique-input-cache.purr"
+    purr_warning_input_cache_unique="$dir_name/warning-unique-input-cache.purr"
+    purr_info_input_cache_unique="$dir_name/info-unique-input-cache.purr"
+    purr_verbose_input_cache_unique="$dir_name/verbose-unique-input-cache.purr"
 
     # File to use for purr history. This file is not removed between sessions.
     purr_history_cache="/var/tmp/history.purr"
@@ -327,6 +342,11 @@ __purr_start_streams() {
     __purr_stream_background_file $purr_warning_input_cache "*:W" $purr_serial_cache &
     __purr_stream_background_file $purr_info_input_cache "*:I" $purr_serial_cache &
     __purr_stream_background_file $purr_verbose_input_cache "*:V" $purr_serial_cache &
+
+    __purr_stream_unique_file $purr_error_input_cache $purr_error_input_cache_unique $purr_error_unique_checksum_cache &
+    __purr_stream_unique_file $purr_warning_input_cache $purr_warning_input_cache_unique $purr_warning_unique_checksum_cache &
+    __purr_stream_unique_file $purr_info_input_cache $purr_info_input_cache_unique $purr_info_unique_checksum_cache &
+    __purr_stream_unique_file $purr_verbose_input_cache $purr_verbose_input_cache_unique $purr_verbose_unique_checksum_cache &
 }
 
 # We can just kill the stream threads; they only interact with
@@ -336,10 +356,16 @@ __purr_cleanup_streams() {
     for pid in ${${(v)jobstates##*:*:}%=*}; do
         wait $pid
     done
+
     rm $purr_error_input_cache &> /dev/null
     rm $purr_warning_input_cache &> /dev/null
     rm $purr_info_input_cache &> /dev/null
     rm $purr_verbose_input_cache &> /dev/null
+
+    rm $purr_error_input_cache_unique &> /dev/null
+    rm $purr_warning_input_cache_unique &> /dev/null
+    rm $purr_info_input_cache_unique &> /dev/null
+    rm $purr_verbose_input_cache_unique &> /dev/null
 }
 
 # The function that runs the stream threads. Each should run an
@@ -453,6 +479,43 @@ __purr_stream_background_file() {
     done
 }
 
+__purr_stream_unique_file() {
+    local stream_input_file=$1
+    local stream_output_file=$2
+    local stream_checksum_file=$3
+
+    # If the directory doesn't exist anymore, it's likely that we have exited.
+    touch $stream_output_file &> /dev/null
+    if [ $? -ne 0 ]; then
+        exit
+    fi
+
+    # If the directory doesn't exist anymore, it's likely that we have exited.
+    touch $stream_checksum_file &> /dev/null
+    if [ $? -ne 0 ]; then
+        exit
+    fi
+
+    tail -s 0.1 -F --lines=+0 -- $stream_input_file 2> /dev/null | while read -r line; do
+        trimmed_line_cksum=$(echo $line | awk '{$1=$1};1' | cut -d' ' -f5- -- | cksum | cut -d' ' -f1)
+        if command -v rg &>/dev/null; then
+            if ! rg -q "$trimmed_line_cksum" $stream_checksum_file 2> /dev/null; then
+                echo "$line" >> $stream_output_file
+                echo "$trimmed_line_cksum" >> $stream_checksum_file
+            else
+                echo "Erasing duplicate line..." >> $stream_output_file
+            fi
+        else
+            if ! /usr/bin/grep -q "$trimmed_line_cksum" $stream_checksum_file 2> /dev/null; then
+                echo "$line" >> $stream_output_file
+                echo "$trimmed_line_cksum" >> $stream_checksum_file
+            else
+                echo "Erasing duplicate line..." >> $stream_output_file
+            fi
+        fi
+    done
+}
+
 # Usage command for help menu.
 usage=("purr"
     "\n[-q: Sets the default query]"
@@ -503,7 +566,7 @@ if [ -z $pbcopy_purr ]; then
     echo "purr will continue, but the Ctrl-Y hotkey will not work."
 fi
 
-VERSION="1.2.5"
+VERSION="1.3.0"
 COMPOSITE_VERSION="Purr: $VERSION, fzf: $($fzf_purr --version), zsh: $ZSH_VERSION"
 
 # Parse argument flags.
@@ -580,6 +643,10 @@ stream_adb_msg="\x1b[1;35mADB\x1b[1;0m\t\t"
 slock_on_msg="\x1b[1;31mOn   \x1b[1;0m"
 slock_off_msg="\x1b[1;32mOff  \x1b[1;0m"
 
+# Prompt for scroll lock on/off.
+unique_on_msg="\x1b[1;31mOn   \x1b[1;0m"
+unique_off_msg="\x1b[1;32mOff  \x1b[1;0m"
+
 # Prompt for each sorting mode.
 sorting_chronological="\x1b[1;35mChronological\x1b[1;0m\t"
 sorting_relevance="\x1b[1;36mRelevance\x1b[1;0m\t\t"
@@ -608,6 +675,8 @@ load_generic_header=(
     "cat $purr_sort_header_cache | tr -d \"\n\";"
     "echo -n \"Scroll Lock: \";"
     "cat $purr_slock_cache | tr -d \"\n\";"
+    "echo -n \"Unique: \";"
+    "cat $purr_unique_cache | tr -d \"\n\";"
     "echo \"\x1b[1;2;37mPurr: Happy Logcat\x1b[1;0m\";"
 )
 
@@ -647,6 +716,12 @@ set_stream_error="echo \"/usr/bin/tail -F -n 99999999 $purr_error_input_cache $t
 set_stream_warning="echo \"/usr/bin/tail -F -n 99999999 $purr_warning_input_cache $teecmd\" >| $purr_input_stream_cache;"
 set_stream_info="echo \"/usr/bin/tail -F -n 99999999 $purr_info_input_cache $teecmd\" >| $purr_input_stream_cache;"
 set_stream_verbose="echo \"/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache $teecmd\" >| $purr_input_stream_cache;"
+
+set_stream_error_unique="echo \"/usr/bin/tail -F -n 99999999 $purr_error_input_cache_unique $teecmd\" >| $purr_input_stream_cache;"
+set_stream_warning_unique="echo \"/usr/bin/tail -F -n 99999999 $purr_warning_input_cache_unique $teecmd\" >| $purr_input_stream_cache;"
+set_stream_info_unique="echo \"/usr/bin/tail -F -n 99999999 $purr_info_input_cache_unique $teecmd\" >| $purr_input_stream_cache;"
+set_stream_verbose_unique="echo \"/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache_unique $teecmd\" >| $purr_input_stream_cache;"
+
 set_stream_adb="echo \"/usr/bin/tail -F -n 99999999 $purr_adb_cache $teecmd\" >| $purr_input_stream_cache;"
 
 stop_stream="echo \"stop\" >> $purr_background_handler_cache;"
@@ -671,10 +746,17 @@ save_current_query="echo {q} > $purr_query_cache;"
 set_slock_on="echo \"$slock_on_msg\" >| $purr_slock_cache;"
 set_slock_off="echo \"$slock_off_msg\" >| $purr_slock_cache;"
 
+# Sets the scroll lock header to a given state.
+set_unique_on="echo \"$unique_on_msg\" >| $purr_unique_cache;"
+set_unique_off="echo \"$unique_off_msg\" >| $purr_unique_cache;"
+
 # Boolean to determine state of scroll lock.
 is_slock_on="/usr/bin/grep -q  \"On\" \"$purr_slock_cache\""
 
-# Boolean to determine state of scroll lock.
+# Boolean to determine state of unique mode.
+is_unique_on="/usr/bin/grep -q  \"On\" \"$purr_unique_cache\""
+
+# Boolean to determine state of sort order.
 is_sort_chrono="/usr/bin/grep -q  \"Chronological\" \"$purr_sort_header_cache\""
 
 # Injects an empty line to force fzf to refresh the input stream.
@@ -879,6 +961,7 @@ default_command_suite="rebind(f1)\
 +rebind(ctrl-p)\
 +rebind(ctrl-r)\
 +rebind(ctrl-s)\
++rebind(ctrl-u)\
 +rebind(ctrl-j)\
 +rebind(ctrl-f)\
 +rebind(ctrl-w)\
@@ -897,7 +980,11 @@ default_command_suite="rebind(f1)\
 error_cmd=(
     'execute-silent('
         '{'
-            $set_stream_error
+            "if $is_unique_on; then"
+                $set_stream_error_unique
+            "else;"
+                $set_stream_error
+            "fi;"
             $set_header_error
             $set_slock_off
         '} &'
@@ -914,7 +1001,11 @@ bind_commands+=('--bind' "f1:$error_cmd")
 warn_cmd=(
     'execute-silent('
         '{'
-            $set_stream_warning
+            "if $is_unique_on; then"
+                $set_stream_warning_unique
+            "else;"
+                $set_stream_warning
+            "fi;"
             $set_header_warning
             $set_slock_off
         '} &'
@@ -931,7 +1022,11 @@ bind_commands+=('--bind' "f2:$warn_cmd")
 info_cmd=(
     'execute-silent('
         '{'
-            $set_stream_info
+            "if $is_unique_on; then"
+                $set_stream_info_unique
+            "else;"
+                $set_stream_info
+            "fi;"
             $set_header_info
             $set_slock_off
         '} &'
@@ -948,7 +1043,11 @@ bind_commands+=('--bind' "f3:$info_cmd")
 verb_cmd=(
     'execute-silent('
         '{'
-            $set_stream_verbose
+            "if $is_unique_on; then"
+                $set_stream_verbose_unique
+            "else;"
+                $set_stream_verbose
+            "fi;"
             $set_header_verbose
             $set_slock_off
         '} &'
@@ -960,6 +1059,31 @@ verb_cmd=(
     ")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f4:$verb_cmd")
+
+# Bind: ctrl-u, set unique mode on.
+unique_cmd=(
+    'execute-silent('
+        "if $is_unique_on; then"
+            $set_unique_off
+            "sed -i 's/verbose-unique/verbose/g' $purr_input_stream_cache;"
+            "sed -i 's/info-unique/info/g' $purr_input_stream_cache;"
+            "sed -i 's/warning-unique/warning/g' $purr_input_stream_cache;"
+            "sed -i 's/error-unique/error/g' $purr_input_stream_cache;"
+        "else;"
+            $set_unique_on
+            "sed -i 's/verbose/verbose-unique/g' $purr_input_stream_cache;"
+            "sed -i 's/info/info-unique/g' $purr_input_stream_cache;"
+            "sed -i 's/warning/warning-unique/g' $purr_input_stream_cache;"
+            "sed -i 's/error/error-unique/g' $purr_input_stream_cache;"
+        "fi;"
+    ')+reload('
+        $inject_emppty_line
+        $load_input_stream
+    ")+transform-header("
+        $load_generic_header
+    ")+first+enable-search+$default_command_suite"
+)
+bind_commands+=('--bind' "ctrl-u:$unique_cmd")
 
 adb_command_suite="rebind(f1)\
 +rebind(f2)\
@@ -973,6 +1097,7 @@ adb_command_suite="rebind(f1)\
 +unbind(ctrl-p)\
 +unbind(ctrl-r)\
 +rebind(ctrl-s)\
++unbind(ctrl-u)\
 +rebind(ctrl-j)\
 +rebind(ctrl-f)\
 +unbind(ctrl-w)\
@@ -1219,6 +1344,7 @@ history_command_suite="rebind(f1)\
 +unbind(ctrl-p)\
 +unbind(ctrl-r)\
 +unbind(ctrl-s)\
++unbind(ctrl-u)\
 +rebind(ctrl-j)\
 +unbind(ctrl-f)\
 +unbind(ctrl-w)\
@@ -1401,6 +1527,7 @@ bind_commands+=('--bind' "esc:$esc_cmd")
 echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache
 echo $stream_verbose_msg >| $purr_stream_header_cache
 echo $slock_off_msg >| $purr_slock_cache
+echo $unique_off_msg >| $purr_unique_cache
 echo $sorting_chronological >| $purr_sort_header_cache
 echo "/usr/bin/tail -F -n 99999999 $purr_verbose_input_cache $teecmd" >| $purr_input_stream_cache
 
