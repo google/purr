@@ -299,7 +299,7 @@ __purr_print_instructions() {
     echo "  \x1b[1;1mCtrl-v:\x1b[1;0m Open selected line in text editor" >> $purr_instruction_cache
     echo "  \x1b[1;1mCtrl-y:\x1b[1;0m Copy selected lines" >> $purr_instruction_cache
     echo "  \x1b[1;1mTab:\x1b[1;0m Select multiple lines" >> $purr_instruction_cache
-    echo "  \x1b[1;1mCtrl-\:\x1b[1;0m Print simple device information to the clipboard and start a background process to save a bug report to /tmp/bug-report-\$epoch." >> $purr_instruction_cache
+    echo "  \x1b[1;1mCtrl-\:\x1b[1;0m Print simple device information to the clipboard and start a background process to save a bug report to /tmp/bug-report-\$device-\$date.zip." >> $purr_instruction_cache
 }
 
 __purr_cleanup() {
@@ -1300,7 +1300,13 @@ cmd_clipboard=(
         'info_array+=("\nGMS Version:" $(adb -s $serial shell dumpsys package com.google.android.gms | grep "versionName" | /usr/bin/head -n 1));'
         'info_array+=("\n\`\`\`");'
         "echo \"\$info_array\" | $pbcopy_purr > $target_tty;"
-        '{ adb -s $serial bugreport /tmp/bugreport-$(adb shell getprop ro.product.vendor.name)-$(adb shell getprop ro.product.vendor.device)-$(adb shell getprop ro.vendor.build.version.sdk)-$(date +"%d-%m-%Y::%H:%M:%S") } &'
+        '{'
+            'bug_report_name="/tmp/bugreport-$(adb -s $serial shell getprop ro.product.vendor.name)-$(adb -s $serial shell getprop ro.product.vendor.device)-$(adb -s $serial shell getprop ro.vendor.build.version.sdk)-$(date +"%d-%m-%Y::%H:%M:%S")";'
+            'bug_report_error=$(adb -s $serial bugreport $bug_report_name);'
+            'if [ ! -f "${bug_report_name}.zip" ]; then '
+                'echo $bug_report_error > "${bug_report_name}_err";'
+            'fi;'
+        '} &'
     ')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-\:$cmd_clipboard")
