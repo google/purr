@@ -12,22 +12,20 @@ This is sub-optimal and wastes a lot of time on writing `grep` statements and ro
 
 ### Dependencies
 
-`purr` currently functions on Ubuntu Linux and Mac on zsh. It will attempt to source an `fzf` version locally if possible, but requires version `0.40.0` or higher.
+`purr` currently functions on Ubuntu Linux and Mac on zsh, and requires a local install of `fzf` with version `0.40.0` or higher.
 
-If you do not have `fzf` `0.40.0` or higher locally, `purr` will use bundled `fzf` versions for `linux_x86_64`, `darwin_arm64` or `darwin_amd64` if applicable. If you have a different operating system, you need to download a `0.40.0` or higher `fzf` binary manually.
+Some `purr` commands require a program to copy to clipboard. `purr` will check automatically for installations of `pbcopy`, `xsel`, and `wl-copy`. If the `COPY_PROGRAM` variable is set, purr will attempt to use it. If you are unsure of which copy program to use, a version of OSC52 copy is bundled and can be used if it is added to your path (and your terminal supports OSC52).
 
 Support for Windows may be provided in future, but is not a current priority.
 
 ### Installation
+1. Download the latest release version.
+2. Place the script in your PATH.
+3. If you need a copy program, also put the bundled osc52_copy program in your PATH.
+
+### Compilation
 1. Clone the repo
-2. Add the scripts directory to your path
-3. Run using `purr`
-
-
-`purr` comes with two bundled programs:
-
-* `purr_osc52_copy` is a fallback to copy to the system clipboard through SSH and TMUX sessions.
-* `purr_fzf` is a bundled version of fzf `0.40.0` used if a higher version of `fzf` cannot be found.
+2. Run "make"
 
 ### Guide
 `purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
@@ -102,7 +100,7 @@ If multiple lines are selected, only those selected lines will be opened in the 
 2. Open in your favorite IDE/editor
 
 ### Dependencies
-* [fzf](https://github.com/junegunn/fzf) - Bundled
+* [fzf](https://github.com/junegunn/fzf)
 * [zsh](https://github.com/zsh-users/zsh)
 * [adb](https://developer.android.com/studio/command-line/adb)
 
