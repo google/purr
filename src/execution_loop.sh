@@ -40,8 +40,8 @@ while true; do
 		ret=$?
 	fi
 
-	# 0 is normal exit, 1 is exit with no accepted. These are the only codes on which
-	# we want to break out of our execution loop.
+	# fzf returns 0 when it normally exits, and returns 1 when it normally exists but does
+	# not return an "accepted" string. These are the only codes on which we want break.
 	if [ "$ret" -ne 0 ] && [ "$ret" -ne 1 ]; then
 		break
 	fi
