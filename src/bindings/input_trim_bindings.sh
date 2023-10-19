@@ -27,6 +27,10 @@ wipe_cmd=(
 	')+accept'
 )
 bind_commands+=('--bind' "ctrl-w:$wipe_cmd")
+rebind_in_default_command_suite "ctrl-w"
+unbind_in_adb_command_suite "ctrl-w"
+unbind_in_history_command_suite "ctrl-w"
+unbind_in_serial_command_suite "ctrl-w"
 
 # Bind: ctrl-t, trim input to the end of the file.
 trim_cmd=(
@@ -45,6 +49,10 @@ trim_cmd=(
 	')+accept-non-empty'
 )
 bind_commands+=('--bind' "ctrl-t:$trim_cmd")
+rebind_in_default_command_suite "ctrl-t"
+unbind_in_adb_command_suite "ctrl-t"
+unbind_in_history_command_suite "ctrl-t"
+unbind_in_serial_command_suite "ctrl-t"
 
 # Bind: ctrl-alt-t, de-trim input.
 untrim_cmd=(
@@ -59,3 +67,7 @@ untrim_cmd=(
 	')+accept'
 )
 bind_commands+=('--bind' "ctrl-alt-t:$untrim_cmd")
+rebind_in_default_command_suite "ctrl-alt-t"
+unbind_in_adb_command_suite "ctrl-alt-t"
+unbind_in_history_command_suite "ctrl-alt-t"
+unbind_in_serial_command_suite "ctrl-alt-t"

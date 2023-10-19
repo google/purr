@@ -14,97 +14,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-default_command_suite=$(
-	tr -d '\n' <<-END
-		rebind(f1)
-		+rebind(f2)
-		+rebind(f3)
-		+rebind(f4)
-		+rebind(f5)
-		+rebind(f6)
-		+rebind(f7)
-		+rebind(f9)
-		+rebind(f10)
-		+rebind(ctrl-p)
-		+rebind(ctrl-r)
-		+rebind(ctrl-s)
-		+rebind(ctrl-u)
-		+rebind(ctrl-j)
-		+rebind(ctrl-f)
-		+rebind(ctrl-w)
-		+rebind(ctrl-t)
-		+rebind(ctrl-alt-t)
-		+rebind(tab)
-		+rebind(ctrl-v)
-		+rebind(ctrl-y)
-		+rebind(ctrl-alt-s)
-		+rebind(ctrl-alt-d)
-		+unbind(enter)
-		+unbind(ctrl-h)
-		+unbind(double-click)
-	END
-)
+# Double-click is bound by default, just unbind it here. 
+default_command_suite="unbind(double-click)"
+adb_command_suite="unbind(double-click)"
+history_command_suite="unbind(double-click)"
+serial_command_suite="unbind(double-click)"
 
-adb_command_suite=$(
-	tr -d '\n' <<-END
-		rebind(f1)
-		+rebind(f2)
-		+rebind(f3)
-		+rebind(f4)
-		+rebind(f5)
-		+rebind(f6)
-		+unbind(f7)
-		+unbind(f9)
-		+unbind(f10)
-		+unbind(ctrl-p)
-		+unbind(ctrl-r)
-		+rebind(ctrl-s)
-		+unbind(ctrl-u)
-		+rebind(ctrl-j)
-		+rebind(ctrl-f)
-		+unbind(ctrl-w)
-		+unbind(ctrl-t)
-		+unbind(ctrl-alt-t)
-		+rebind(tab)
-		+rebind(ctrl-v)
-		+rebind(ctrl-y)
-		+rebind(enter)
-		+rebind(ctrl-h)
-		+unbind(ctrl-alt-s)
-		+unbind(ctrl-alt-d)
-		+unbind(double-click)
-	END
-)
+rebind_in_default_command_suite() {
+	default_command_suite="$default_command_suite+rebind($1)"
+}
 
-history_command_suite=$(
-	tr -d '\n' <<-END
-		rebind(f1)
-		+rebind(f2)
-		+rebind(f3)
-		+rebind(f4)
-		+rebind(f5)
-		+rebind(f6)
-		+unbind(f7)
-		+unbind(f9)
-		+unbind(f10)
-		+unbind(ctrl-p)
-		+unbind(ctrl-r)
-		+unbind(ctrl-s)
-		+unbind(ctrl-u)
-		+rebind(ctrl-j)
-		+unbind(ctrl-f)
-		+unbind(ctrl-w)
-		+unbind(ctrl-t)
-		+unbind(ctrl-alt-t)
-		+unbind(tab)
-		+unbind(ctrl-v)
-		+unbind(ctrl-y)
-		+rebind(enter)
-		+unbind(ctrl-h)
-		+unbind(ctrl-alt-s)
-		+unbind(ctrl-alt-d)
-		+unbind(double-click)
-	END
-)
+rebind_in_adb_command_suite() {
+	adb_command_suite="$adb_command_suite+rebind($1)"
+}
 
-serial_command_suite="$history_command_suite"
+rebind_in_history_command_suite() {
+	history_command_suite="$history_command_suite+rebind($1)"
+}
+
+rebind_in_serial_command_suite() {
+	serial_command_suite="$serial_command_suite+rebind($1)"
+}
+
+unbind_in_default_command_suite() {
+	default_command_suite="$default_command_suite+unbind($1)"
+}
+
+unbind_in_adb_command_suite() {
+	adb_command_suite="$adb_command_suite+unbind($1)"
+}
+
+unbind_in_history_command_suite() {
+	history_command_suite="$history_command_suite+unbind($1)"
+}
+
+unbind_in_serial_command_suite() {
+	serial_command_suite="$serial_command_suite+unbind($1)"
+}

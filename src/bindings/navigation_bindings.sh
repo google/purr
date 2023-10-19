@@ -16,7 +16,20 @@
 
 # Bind: ctrl-f, brings the user to the currently selected entry.
 bind_commands+=('--bind' "ctrl-f:track+clear-query+hide-preview+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)")
+rebind_in_default_command_suite "ctrl-f"
+rebind_in_adb_command_suite "ctrl-f"
+rebind_in_history_command_suite "ctrl-f"
+rebind_in_serial_command_suite "ctrl-f"
 
 # Bind: home/end, similar to page-up/page-down for preview.
 bind_commands+=('--bind' "home:preview-page-up")
+rebind_in_default_command_suite "home"
+rebind_in_adb_command_suite "home"
+rebind_in_history_command_suite "home"
+rebind_in_serial_command_suite "home"
+
 bind_commands+=('--bind' "end:preview-page-down")
+rebind_in_default_command_suite "end"
+rebind_in_adb_command_suite "end"
+rebind_in_history_command_suite "end"
+rebind_in_serial_command_suite "end"

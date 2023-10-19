@@ -21,6 +21,11 @@ instruction_preview_cache_command=$(cat <<-END
 	END
 )
 bind_commands+=('--bind' "F7:$hint_preview+execute-silent($instruction_preview_command)")
+rebind_in_default_command_suite "F7"
+unbind_in_adb_command_suite "F7"
+unbind_in_history_command_suite "F7"
+unbind_in_serial_command_suite "F7"
+
 
 # Bind: F9, highlight selected line and show 200 lines of context around it in current stream.
 current_hint_preview_command=$(cat <<-END
@@ -105,6 +110,10 @@ current_hint_preview_cache_command=$(cat <<-END
 	END
 )
 bind_commands+=('--bind' "F9:change-preview($current_hint_preview_command)+change-preview-label(F9: Current Stream)+change-preview-window($hint_preview_window)+refresh-preview+execute-silent($current_hint_preview_cache_command)")
+rebind_in_default_command_suite "F9"
+unbind_in_adb_command_suite "F9"
+unbind_in_history_command_suite "F9"
+unbind_in_serial_command_suite "F9"
 
 # Bind: F10, highlight selected line and show 200 lines of context around it in verbose stream.
 verbose_hint_preview_command=$(echo "$current_hint_preview_command" | sed "s:$purr_input_cache:$purr_verbose_input_cache:g")
@@ -114,6 +123,10 @@ verbose_hint_preview_cache_command=$(cat <<-END
 	END
 )
 bind_commands+=('--bind' "F10:change-preview($verbose_hint_preview_command)+change-preview-label(F10: Verbose Stream)+change-preview-window($hint_preview_window)+refresh-preview+execute-silent($verbose_hint_preview_cache_command)")
+rebind_in_default_command_suite "F10"
+unbind_in_adb_command_suite "F10"
+unbind_in_history_command_suite "F10"
+unbind_in_serial_command_suite "F10"
 
 # Bind: Ctrl-P, toggle preview on/off.
 toggle_preview_cache_command=$(cat <<-END
@@ -125,3 +138,7 @@ toggle_preview_cache_command=$(cat <<-END
 	END
 )
 bind_commands+=('--bind' "ctrl-p:toggle-preview+execute-silent($toggle_preview_cache_command)")
+rebind_in_default_command_suite "ctrl-p"
+unbind_in_adb_command_suite "ctrl-p"
+unbind_in_history_command_suite "ctrl-p"
+unbind_in_serial_command_suite "ctrl-p"

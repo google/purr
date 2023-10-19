@@ -24,6 +24,10 @@ cmd_clipboard=(
 	')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-y:$cmd_clipboard")
+rebind_in_default_command_suite "ctrl-y"
+rebind_in_adb_command_suite "ctrl-y"
+unbind_in_history_command_suite "ctrl-y"
+unbind_in_serial_command_suite "ctrl-y"
 
 # Bind: ctrl-\, prints device information to the clipboard.
 cmd_bug_report=(
@@ -45,3 +49,7 @@ cmd_bug_report=(
 	')+clear-selection'
 )
 bind_commands+=('--bind' "ctrl-\:$cmd_bug_report")
+rebind_in_default_command_suite "ctrl-\\"
+rebind_in_adb_command_suite "ctrl-\\"
+rebind_in_history_command_suite "ctrl-\\"
+rebind_in_serial_command_suite "ctrl-\\"

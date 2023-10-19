@@ -38,6 +38,10 @@ unique_cmd=(
 	")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "ctrl-u:$unique_cmd")
+rebind_in_default_command_suite "ctrl-u"
+unbind_in_adb_command_suite "ctrl-u"
+unbind_in_history_command_suite "ctrl-u"
+unbind_in_serial_command_suite "ctrl-u"
 
 # Bind: ctrl-s, toggle scroll lock.
 stop_cmd=(
@@ -54,6 +58,10 @@ stop_cmd=(
 	")+$default_command_suite"
 )
 bind_commands+=('--bind' "ctrl-s:$stop_cmd")
+rebind_in_default_command_suite "ctrl-s"
+rebind_in_adb_command_suite "ctrl-s"
+unbind_in_history_command_suite "ctrl-s"
+unbind_in_serial_command_suite "ctrl-s"
 
 # Bind: ctrl-j, toggle chronological/relevance sort.
 cmd_sort=(
@@ -70,3 +78,7 @@ cmd_sort=(
 	")+$default_command_suite"
 )
 bind_commands+=('--bind' "ctrl-j:$cmd_sort")
+rebind_in_default_command_suite "ctrl-j"
+rebind_in_adb_command_suite "ctrl-j"
+rebind_in_history_command_suite "ctrl-j"
+rebind_in_serial_command_suite "ctrl-j"

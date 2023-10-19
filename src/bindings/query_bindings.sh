@@ -32,6 +32,11 @@ get_tag_cmd=(
 	')'
 )
 bind_commands+=('--bind' "ctrl-alt-s:$get_tag_cmd")
+rebind_in_default_command_suite "ctrl-alt-s"
+unbind_in_adb_command_suite "ctrl-alt-s"
+unbind_in_history_command_suite "ctrl-alt-s"
+unbind_in_serial_command_suite "ctrl-alt-s"
+
 
 # Bind: ctrl-alt-d, get tag from line and add it as negative query.
 remove_tag_cmd=(
@@ -53,3 +58,7 @@ remove_tag_cmd=(
 	')'
 )
 bind_commands+=('--bind' "ctrl-alt-d:$remove_tag_cmd")
+rebind_in_default_command_suite "ctrl-alt-d"
+unbind_in_adb_command_suite "ctrl-alt-d"
+unbind_in_history_command_suite "ctrl-alt-d"
+unbind_in_serial_command_suite "ctrl-alt-d"

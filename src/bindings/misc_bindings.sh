@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Bind: Ctrl-h, ask for help in ADB command mode.
 adb_help_cmd=(
 	'execute-silent('
@@ -43,6 +42,10 @@ adb_help_cmd=(
 	')+disable-search'
 )
 bind_commands+=('--bind' "ctrl-h:$adb_help_cmd")
+unbind_in_default_command_suite "ctrl-h"
+rebind_in_adb_command_suite "ctrl-h"
+unbind_in_history_command_suite "ctrl-h"
+unbind_in_serial_command_suite "ctrl-h"
 
 # We overload the hell of this command...
 # Bind: enter, select history command or serial selection.
@@ -80,6 +83,10 @@ enter_cmd=(
 	')+accept'
 )
 bind_commands+=('--bind' "enter:$enter_cmd")
+unbind_in_default_command_suite "enter"
+rebind_in_adb_command_suite "enter"
+rebind_in_history_command_suite "enter"
+rebind_in_serial_command_suite "enter"
 
 # Adds logic to handle the prompt change to track serial numbers.
 focus_cmd=(
@@ -97,6 +104,10 @@ esc_cmd=(
 	')+accept'
 )
 bind_commands+=('--bind' "esc:$esc_cmd")
+rebind_in_default_command_suite "esc"
+rebind_in_adb_command_suite "esc"
+rebind_in_history_command_suite "esc"
+rebind_in_serial_command_suite "esc"
 
 # Bind: ctrl-v, for going to the text editor.
 cmd_editor=(
@@ -109,3 +120,7 @@ cmd_editor=(
 	')+accept-non-empty'
 )
 bind_commands+=('--bind' "ctrl-v:$cmd_editor")
+rebind_in_default_command_suite "ctrl-v"
+rebind_in_adb_command_suite "ctrl-v"
+unbind_in_history_command_suite "ctrl-v"
+unbind_in_serial_command_suite "ctrl-v"

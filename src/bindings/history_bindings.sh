@@ -67,6 +67,10 @@ history_up=(
 	')'
 )
 bind_commands+=('--bind' "alt-shift-up:$history_up")
+rebind_in_default_command_suite "alt-shift-up"
+rebind_in_adb_command_suite "alt-shift-up"
+rebind_in_history_command_suite "alt-shift-up"
+rebind_in_serial_command_suite "alt-shift-up"
 
 # See above.
 history_down=(
@@ -84,6 +88,10 @@ history_down=(
 	')'
 )
 bind_commands+=('--bind' "alt-shift-down:$history_down")
+rebind_in_default_command_suite "alt-shift-down"
+rebind_in_adb_command_suite "alt-shift-down"
+rebind_in_history_command_suite "alt-shift-down"
+rebind_in_serial_command_suite "alt-shift-down"
 
 # Bind: ctrl-r, show history file.
 history_cmd=(
@@ -100,3 +108,7 @@ history_cmd=(
 	")+clear-query+first+hide-preview+enable-search+$history_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "ctrl-r:$history_cmd")
+rebind_in_default_command_suite "ctrl-r"
+unbind_in_adb_command_suite "ctrl-r"
+unbind_in_history_command_suite "ctrl-r"
+unbind_in_serial_command_suite "ctrl-r"

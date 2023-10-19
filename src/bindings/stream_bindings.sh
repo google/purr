@@ -33,7 +33,11 @@ error_cmd=(
 		$load_generic_header
 	")+first+enable-search+$default_command_suite"
 )
-bind_commands+=('--bind' "f1:$error_cmd")
+bind_commands+=('--bind' "F1:$error_cmd")
+rebind_in_default_command_suite "F1"
+rebind_in_adb_command_suite "F1"
+rebind_in_history_command_suite "F1"
+rebind_in_serial_command_suite "F1"
 
 # Bind: F2, show logcat warning stream.
 warn_cmd=(
@@ -55,6 +59,10 @@ warn_cmd=(
 	")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f2:$warn_cmd")
+rebind_in_default_command_suite "F2"
+rebind_in_adb_command_suite "F2"
+rebind_in_history_command_suite "F2"
+rebind_in_serial_command_suite "F2"
 
 # Bind: F3, show logcat info stream.
 info_cmd=(
@@ -76,6 +84,10 @@ info_cmd=(
 	")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f3:$info_cmd")
+rebind_in_default_command_suite "F3"
+rebind_in_adb_command_suite "F3"
+rebind_in_history_command_suite "F3"
+rebind_in_serial_command_suite "F3"
 
 # Bind: F4, show logcat verbose stream.
 verb_cmd=(
@@ -97,6 +109,10 @@ verb_cmd=(
 	")+first+enable-search+$default_command_suite"
 )
 bind_commands+=('--bind' "f4:$verb_cmd")
+rebind_in_default_command_suite "F4"
+rebind_in_adb_command_suite "F4"
+rebind_in_history_command_suite "F4"
+rebind_in_serial_command_suite "F4"
 
 # Bind: F5, show serial stream.
 serial_cmd=(
@@ -113,6 +129,10 @@ serial_cmd=(
 	")+first+enable-search+hide-preview+$serial_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "f5:$serial_cmd")
+rebind_in_default_command_suite "F5"
+rebind_in_adb_command_suite "F5"
+rebind_in_history_command_suite "F5"
+rebind_in_serial_command_suite "F5"
 
 # Bind: F6, open adb command mode.
 adb_stream_cmd=(
@@ -130,3 +150,7 @@ adb_stream_cmd=(
 	")+first+disable-search+hide-preview+$adb_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
 )
 bind_commands+=('--bind' "f6:$adb_stream_cmd")
+rebind_in_default_command_suite "F6"
+rebind_in_adb_command_suite "F6"
+rebind_in_history_command_suite "F6"
+rebind_in_serial_command_suite "F6"
