@@ -10,14 +10,6 @@ This is sub-optimal and wastes a lot of time on writing `grep` statements and ro
 
 <img src="https://github.com/google/purr/assets/126256142/9dee2b1c-f347-4465-88fe-f6923a3fc65f" alt="Main Purr Screenshot">
 
-### Dependencies
-
-`purr` currently functions on Ubuntu Linux and Mac on zsh, and requires a local install of `fzf` with version `0.40.0` or higher.
-
-Some `purr` commands require a program to copy to clipboard. `purr` will check automatically for installations of `pbcopy`, `xsel`, and `wl-copy`. If the `COPY_PROGRAM` variable is set, purr will attempt to use it. If you are unsure of which copy program to use, a version of OSC52 copy is bundled and can be used if it is added to your path (and your terminal supports OSC52).
-
-Support for Windows may be provided in future, but is not a current priority.
-
 ### Installation
 1. Download the latest release version.
 2. Place the script in your PATH.
@@ -26,6 +18,20 @@ Support for Windows may be provided in future, but is not a current priority.
 ### Compilation
 1. Clone the repo
 2. Run "make"
+
+### Dependencies
+
+`purr` currently functions on Ubuntu Linux and Mac on `zsh`, and requires a local install of `fzf` with version `0.40.0` or higher.
+
+Some `purr` commands require a program to copy to clipboard. `purr` will check automatically for installations of `pbcopy`, `xsel`, and `wl-copy`. If the `COPY_PROGRAM` variable is set, purr will attempt to use it. If you are unsure of which copy program to use, a version of OSC52 copy is bundled and can be used if it is added to your path (and your terminal supports OSC52).
+
+Support for Windows may be provided in future, but is not a current priority.
+
+#### Links
+
+* [fzf](https://github.com/junegunn/fzf)
+* [zsh](https://github.com/zsh-users/zsh)
+* [adb](https://developer.android.com/studio/command-line/adb)
 
 ### Guide
 `purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
@@ -98,11 +104,6 @@ If multiple lines are selected, only those selected lines will be opened in the 
 ### Development
 1. Clone the repo
 2. Open in your favorite IDE/editor
-
-### Dependencies
-* [fzf](https://github.com/junegunn/fzf)
-* [zsh](https://github.com/zsh-users/zsh)
-* [adb](https://developer.android.com/studio/command-line/adb)
 
 ### Support
 
