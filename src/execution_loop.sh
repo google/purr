@@ -50,7 +50,7 @@ while true; do
 	accept_cmd=""
 
 	# The async processes might take a bit of time to process the accept command.
-	timeout 1 "wait_for_file $purr_accept_command_cache"
+	purr_timeout 1 "wait_for_file $purr_accept_command_cache"
 
 	# We'll use this to figure out the user input before fzf stopped.
 	accept_cmd=$(cat $purr_accept_command_cache)

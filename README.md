@@ -21,17 +21,16 @@ This is sub-optimal and wastes a lot of time on writing `grep` statements and ro
 
 ### Dependencies
 
-`purr` currently functions on Ubuntu Linux and Mac on `zsh`, and requires a local install of `fzf` with version `0.40.0` or higher.
+`purr` currently functions on Ubuntu Linux and Mac on `zsh`, and requires a local install of `fzf` with version `0.40.0` or higher, `perl`, and `adb`.
 
 Some `purr` commands require a program to copy to clipboard. `purr` will check automatically for installations of `pbcopy`, `xsel`, and `wl-copy`. If the `COPY_PROGRAM` variable is set, purr will attempt to use it. If you are unsure of which copy program to use, a version of OSC52 copy is bundled and can be used if it is added to your path (and your terminal supports OSC52).
 
 Support for Windows may be provided in future, but is not a current priority.
 
-#### Links
-
-* [fzf](https://github.com/junegunn/fzf)
+* [fzf](https://github.com/junegunn/fzf) [0.40.0+]
 * [zsh](https://github.com/zsh-users/zsh)
 * [adb](https://developer.android.com/studio/command-line/adb)
+* [perl](https://www.perl.org/)
 
 ### Guide
 `purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
@@ -47,9 +46,7 @@ Any other command-line parameters will print the help dialog.
 
 Note that both `-a` and `-f` are read without validation; there is no guarantee that setting either parameter will not break `purr`.
 
-#### Binds
-The following hotkeys can be used:
-
+### Hotkeys
 
 #### General
 * Escape: Exits `purr`. Ctrl-c and other methods also work, but may take longer, and may not gracefully exit.
@@ -72,6 +69,8 @@ The following hotkeys can be used:
 * Ctrl-s: Enables scroll lock. While in scroll lock mode, your cursor will remain bound to the selected item as long as it remains in the search filter.
 * Ctrl-f: Shorthand for enabling scroll lock and clearing the query. This allows you to go to the surrounding context of a selected item. Scroll lock will end once you move your cursor.
 * Ctrl-j: Changes search modes between Chronological (default) and Relevance. This may be useful for fuzzy queries.
+
+#### Querry
 * Ctrl-alt-s: Adds the selected tag to your query. If the tag already exists in your query, do nothing.
 * Ctrl-alt-d: Adds the inverse of the selected tag to your query. If the tag already exists in your query, remove it instead. Note that the inverse of the selected tag may also match non-tag lines in your log output.
 
@@ -89,6 +88,7 @@ The following hotkeys can be used:
 #### History
 `purr` saves a query string to history once it has not been changed for more than 3.5 seconds. You can use the following hotkeys to access history:
 
+* Ctrl-r: Show the full history menu.
 * Alt-shift-up: Move to the next entry in history.
 * Alt-shift-down: Move to the previous entry in history.
 

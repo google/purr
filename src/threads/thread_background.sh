@@ -87,7 +87,7 @@ __purr_stream_background_file() {
 
 		# If we disconnected, we want to make sure that the device is still offline.
 		if [[ $conn_status = "potential" ]]; then
-			timeout 2 "adb -s $serial wait-for-device" &> /dev/null
+			purr_timeout 2 "adb -s $serial wait-for-device" &> /dev/null
 
 			# The device seems to have found itself, we can just reconnect.
 			if [ $? -eq 0 ]; then

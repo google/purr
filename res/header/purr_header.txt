@@ -21,5 +21,6 @@
 #   51 - Shell is not zsh.
 #   52 - No valid adb installation found.
 #   53 - No valid fzf installation found.
+#   54 - No valid perl installation found.
 # 60-69: Irrecoverable ADB-related error.
 #   61 - Could not get a serial number.

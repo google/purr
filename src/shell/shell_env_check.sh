@@ -30,18 +30,21 @@ __purr_check_env() {
 
 	# Ensures that the user has adb installed.
 	if ! type adb &>/dev/null; then
-		echo >&2 "You don't have adb installed."
-		echo >&2 "Running: sudo apt-get install adb"
-		/usr/bin/sudo apt-get install adb
+		echo >&2 "purr requires ADB to be installed for correct operation. Aborting."
 		exit 52
 	fi
 
 	# Ensures that the user has fzf 0.40.0 or later installed.
 	autoload is-at-least
 	if ! command -v fzf &>/dev/null || ! is-at-least $REQUIRED_FZF_VERSION $(fzf --version | cut -d' ' -f1); then
-		echo >&2 "Could not identify valid fzf version."
-		echo >&2 "purr requires fzf 0.40.0 or higher."
+		echo >&2 "purr requires fzf 0.40.0 or higher to be installed for correct operation. Aborting."
 		exit 53
+	fi
+
+	# Ensures that the user has perl installed.
+	if ! command -v perl &>/dev/null; then
+		echo >&2 "purr requires perl to be installed for correct operation. Aborting."
+		exit 54
 	fi
 }
 

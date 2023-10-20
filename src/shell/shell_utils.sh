@@ -16,7 +16,7 @@
 
 # We need this because Macs don't have "timeout" as a default command.
 # However, both Mac and Linux machines (typically) have perl...
-timeout() {
+purr_timeout() {
 	PERL_BADLANG=0 perl -e 'alarm shift; exec @ARGV' "$@"
 }
 

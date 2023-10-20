@@ -39,8 +39,8 @@ __purr_cleanup() {
 # We want to avoid the case where we don't have any input coming through,
 # causing a block until an error is thrown.
 __wait_for_input_streams() {
-	timeout 0.1 wait_for_file $purr_verbose_input_cache
-	timeout 0.1 wait_for_file $purr_info_input_cache
-	timeout 0.1 wait_for_file $purr_warning_input_cache
-	timeout 0.1 wait_for_file $purr_error_input_cache
+	purr_timeout 0.1 wait_for_file $purr_verbose_input_cache
+	purr_timeout 0.1 wait_for_file $purr_info_input_cache
+	purr_timeout 0.1 wait_for_file $purr_warning_input_cache
+	purr_timeout 0.1 wait_for_file $purr_error_input_cache
 }

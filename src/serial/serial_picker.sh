@@ -83,7 +83,7 @@ __pick_serial_wait() {
 	fi
 
 	# See if any devices are immediately connected before printing a connect message.
-	timeout 1 "adb $serial_stmt wait-for-device" 2>/dev/null
+	purr_timeout 1 "adb $serial_stmt wait-for-device" 2>/dev/null
 	ret=$?
 
 	# If we can't find any immediate connections, go into a longer waiting period.
