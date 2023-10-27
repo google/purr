@@ -1,14 +1,24 @@
 # purr
 
 ### Introduction
-purr is a zsh CLI tool for viewing and searching through Android logcat output. It leverages [fzf](https://github.com/junegunn/fzf) to provide a simple yet powerful user interface, fuzzy-finding capabilities, and much more. 
+purr is a zsh CLI tool for viewing and searching through Android logcat output. It leverages [fzf](https://github.com/junegunn/fzf) to provide a simple yet powerful user interface, fuzzy-finding capabilities, and much more.
 
 ### Motivation
 While Android Studio's logcat viewer is sufficient for most app development, it breaks down when exposed to situations such as terminal-only access or when multiple devices need to be accessed quickly. When performing development on the Android operating system itself, developers revert to using raw `adb logcat` in shell.
 
 This is sub-optimal and wastes a lot of time on writing `grep` statements and rooting through uncolored, unfiltered text with poor user experience. `purr` is meant as a solution to this; a powerful logcat viewer running entirely on the shell, capable of going through millions of logs quickly, while leveraging other shell-based solutions for common problems.
 
-<img src="https://github.com/google/purr/assets/126256142/9dee2b1c-f347-4465-88fe-f6923a3fc65f" alt="Main Purr Screenshot">
+Purr can be used for simple app debugging, in which it provides a quicker interface than standard Logcat.
+
+https://github.com/google/purr/assets/126256142/527bb85d-bf50-4ea8-b74f-7751098a3162
+
+For more complex diagnosis, purr shines in quickly jumping around and isolating relevant logs.
+
+https://github.com/google/purr/assets/126256142/fa490ac4-4f20-4049-87df-ffb2b10c3fb2
+
+There's even a mode to search through `adb shell` results; no more grepping through dumpsys!
+
+https://github.com/google/purr/assets/126256142/fb41ec9d-f5a7-43be-98be-9d04ed7b536e
 
 ### Installation
 1. Download the latest release version.
