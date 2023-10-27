@@ -8,7 +8,17 @@ While Android Studio's logcat viewer is sufficient for most app development, it 
 
 This is sub-optimal and wastes a lot of time on writing `grep` statements and rooting through uncolored, unfiltered text with poor user experience. `purr` is meant as a solution to this; a powerful logcat viewer running entirely on the shell, capable of going through millions of logs quickly, while leveraging other shell-based solutions for common problems.
 
-<img src="https://github.com/google/purr/assets/126256142/9dee2b1c-f347-4465-88fe-f6923a3fc65f" alt="Main Purr Screenshot">
+Purr can be used for simple app debugging, in which it provides a quicker interface than standard Logcat.
+
+https://github.com/google/purr/assets/126256142/527bb85d-bf50-4ea8-b74f-7751098a3162
+
+For more complex diagnosis, purr shines in quickly jumping around and isolating relevant logs.
+
+https://github.com/google/purr/assets/126256142/fa490ac4-4f20-4049-87df-ffb2b10c3fb2
+
+There's even a mode to search through `adb shell` results; no more grepping through dumpsys!
+
+https://github.com/google/purr/assets/126256142/fb41ec9d-f5a7-43be-98be-9d04ed7b536e
 
 ### Dependencies
 
@@ -45,7 +55,6 @@ Note that both `-a` and `-f` are read without validation; there is no guarantee 
 
 #### Binds
 The following hotkeys can be used:
-
 
 #### General
 * Escape: Exits `purr`. Ctrl-c and other methods also work, but may take longer, and may not gracefully exit.
