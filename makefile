@@ -42,7 +42,18 @@ purr:
 	cat $(SRCDIR)/fzf_env/fzf_default_state.sh >> "$(PURRFILE)"
 
 	# Load the binding libraries; this is the main block of code for purr.
-	cat $(SRCDIR)/bindings/*.sh >> "$(PURRFILE)"
+	# Order here isn't super important, but the stream bindings need to be
+	# at the very bottom after the command suites are fully initialized.
+	cat $(SRCDIR)/bindings/command_suites.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/copy_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/history_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/input_trim_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/misc_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/mode_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/navigation_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/preview_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/query_bindings.sh >> "$(PURRFILE)"
+	cat $(SRCDIR)/bindings/stream_bindings.sh >> "$(PURRFILE)"
 
 	# Load the execution loop that actually makes things happen.
 	cat $(SRCDIR)/execution_loop.sh >> "$(PURRFILE)"

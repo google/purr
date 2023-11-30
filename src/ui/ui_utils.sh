@@ -48,7 +48,6 @@ __purr_set_start_preview() {
 }
 
 __purr_set_start_command() {
-	echo $default_command_suite
 	if /usr/bin/grep -q "History" $purr_stream_header_cache; then
 		start_command=('--bind' "start:hide-preview+transform-header($load_generic_header)+$history_command_suite")
 	elif /usr/bin/grep -q "ADB" $purr_stream_header_cache; then

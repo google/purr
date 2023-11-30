@@ -92,23 +92,3 @@ rebind_in_default_command_suite "alt-shift-down"
 rebind_in_adb_command_suite "alt-shift-down"
 rebind_in_history_command_suite "alt-shift-down"
 rebind_in_serial_command_suite "alt-shift-down"
-
-# Bind: ctrl-r, show history file.
-history_cmd=(
-	'execute-silent('
-		'{'
-			$set_stream_history
-			$set_header_history
-			$set_slock_off
-		'} &'
-	')+reload('
-		$load_input_stream
-	")+transform-header("
-		$load_generic_header
-	")+clear-query+first+hide-preview+enable-search+$history_command_suite+execute-silent(echo 'hidden' >| $purr_preview_visible_cache;)"
-)
-bind_commands+=('--bind' "ctrl-r:$history_cmd")
-rebind_in_default_command_suite "ctrl-r"
-unbind_in_adb_command_suite "ctrl-r"
-unbind_in_history_command_suite "ctrl-r"
-unbind_in_serial_command_suite "ctrl-r"
