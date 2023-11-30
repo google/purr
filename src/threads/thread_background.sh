@@ -95,7 +95,7 @@ __purr_stream_background_file() {
 				echo "\x1b[1;36mPURR STATUS: Restarting input from last seen timestamp.\x1b[1;0m" >> $stream_file
 				conn_status="alive"
 				if [ $am_verbose = "true" ]; then
-					echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache 
+					echo "\x1b[1;32m  $serial => \x1b[1;0m" > $purr_connection_state_cache
 				fi
 			else # Otherwise, we'll enter a dead state and start polling for the device.
 				echo "\x1b[1;36mPURR STATUS: Device Not Responding.\x1b[1;0m" >> $stream_file
@@ -119,7 +119,7 @@ __purr_stream_background_file() {
 				fi
 			fi
 		fi
-		
+
 		# Once we've established a device connection, we'll start streaming from logcat.
 		if [ $conn_status = "alive" ]; then
 
@@ -128,7 +128,7 @@ __purr_stream_background_file() {
 			if [ -z $trim_time ]; then
 				eval "adb -s $serial logcat -v color $custom_adb_params '$stream_command' >> $stream_file"
 			else
-				
+
 				# We don't want the trim time to survive a thread cleanup,
 				# so once the verbose thread is sure all the other threads
 				# have read it, we wipe the state cache.

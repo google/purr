@@ -9,7 +9,7 @@ all: purr
 
 .PHONY: purr
 
-purr: 
+purr:
 	mkdir -p $(OUTDIR)
 	echo "" > $(PURRFILE)
 

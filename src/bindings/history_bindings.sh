@@ -19,7 +19,7 @@
 # Once the timer ends, we check the integer; if it's not the same,
 # we don't write to history. If it is, we check if we can find the
 # query in the history file. We'll then either write it or move it
-# to the top. This holistically allows us to write to history even 
+# to the top. This holistically allows us to write to history even
 # though queries are never "submitted".
 history_input=(
 	'execute-silent('
@@ -37,7 +37,7 @@ history_input=(
 				"elif /usr/bin/grep -cim1 -x \" *\$query *\" $purr_history_cache; then"
 					"line=\$(/usr/bin/grep -n -x \" *\$query *\" $purr_history_cache | cut -d : -f 1);"
 					"/usr/bin/sed -i \"\${line}d\" $purr_history_cache;"
-					"echo \$query >> $purr_history_cache;"  
+					"echo \$query >> $purr_history_cache;"
 					"echo 0 >| $purr_history_pointer_cache;"
 				'else;'
 					"echo \$query >> $purr_history_cache;"

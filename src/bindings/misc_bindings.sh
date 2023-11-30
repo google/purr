@@ -28,7 +28,7 @@ adb_help_cmd=(
 			'adb_help=$( { eval "adb -s $serial shell $query $string" } 2>&1 );'
 			'ret=$?;'
 			# We are trying best-guesses on what a help prompt might look like here. There isn't
-			# a standard for shell commands, so we're going to try the most common ones, and we 
+			# a standard for shell commands, so we're going to try the most common ones, and we
 			# assume that if a request returns a bunch of lines, maybe it's just dumping help.
 			'if { [ $ret -eq 0 ] && [ ! -s $adb_help ] } || [ $(wc -l <<< $adb_help) -ge 15 ]; then'
 				"echo \"Ran \\\"adb -s \$serial shell \$query \$string\\\"\"  > $purr_adb_cache;"
@@ -49,7 +49,7 @@ unbind_in_serial_command_suite "ctrl-h"
 
 # We overload the hell of this command...
 # Bind: enter, select history command or serial selection.
-enter_cmd=( 
+enter_cmd=(
 	'transform-query('
 		"if /usr/bin/grep -q \"History\" $purr_stream_header_cache; then"
 			'echo {};'

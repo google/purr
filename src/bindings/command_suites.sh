@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Double-click is bound by default, just unbind it here. 
+# Double-click is bound by default, just unbind it here.
 default_command_suite="unbind(double-click)"
 adb_command_suite="unbind(double-click)"
 history_command_suite="unbind(double-click)"

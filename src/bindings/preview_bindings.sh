@@ -73,11 +73,11 @@ current_hint_preview_command=$(cat <<-END
 			full_lines="\$padding_string""\$full_lines";
 		fi;
 
-		# Start building the preview. We need to do this piecemeal to make sure we can 
+		# Start building the preview. We need to do this piecemeal to make sure we can
 		# highlight the relevant lines.
 		preview_top=\$(echo \$full_lines | /usr/bin/head -n 199);
 
-		# Since we aren't guarenteed that the selected line is unique, let's tell the user so 
+		# Since we aren't guarenteed that the selected line is unique, let's tell the user so
 		# they understand why the line might seem different.
 		if [ "\$(/usr/bin/wc -l <<< "\$line_number")" -ne 1 ]; then
 			info_panel="\\n----------------";

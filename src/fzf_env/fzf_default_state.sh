@@ -55,7 +55,7 @@ hh     |)|                                          |
 		\)                                           /
 
 Cats who can purr can't roar, and vice-versa.
-Cheetahs can't roar, but they can meow and purr. 
+Cheetahs can't roar, but they can meow and purr.
 This is because cheetahs are the cutest kittens at heart.
 This has been Cat Facts with Alfred.
 END

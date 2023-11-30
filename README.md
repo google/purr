@@ -105,7 +105,7 @@ Note that both `-a` and `-f` are read without validation; there is no guarantee 
 When scrolling through history with alt-shift-up or alt-shift-down, your position in the history will reset once a string has been in the query for 3.5 seconds.
 
 #### Editor
-When you select a single line and press Ctrl-V, `purr` will open the selected line and surrounding context in a text editor. You can specify the text editor through the `$EDITOR` or `$EDITOR_PURR` environment variables; if no text editor is specified, `purr` will use `vim`. 
+When you select a single line and press Ctrl-V, `purr` will open the selected line and surrounding context in a text editor. You can specify the text editor through the `$EDITOR` or `$EDITOR_PURR` environment variables; if no text editor is specified, `purr` will use `vim`.
 
 Note that logcat uses ANSI color codes to display color, so an editor that supports these codes is recommended; for example, [AnsiEsc](https://www.vim.org/scripts/script.php?script_id=302) for `Vim`.
 
