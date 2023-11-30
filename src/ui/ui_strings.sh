@@ -90,44 +90,6 @@ instruction_preview_window="right,50%,nohidden,nofollow,wrap,<55(up,50%,nohidden
 instruction_preview_window_hidden="right,50%,hidden,nofollow,wrap,<55(up,50%,hidden,nofollow,wrap)"
 hint_preview=("change-preview($instruction_preview_command)+change-preview-window($instruction_preview_window)+change-preview-label()+refresh-preview")
 
-instruction_preview_starter=("--preview"
-	"$instruction_preview_command"
-	"--preview-window"
-	"$instruction_preview_window")
-
-current_hint_preview_starter=("--preview"
-	"$current_hint_preview_command"
-	"--preview-window"
-	"$hint_preview_window"
-	"--preview-label"
-	"Current Stream")
-
-verbose_hint_preview_starter=("--preview"
-	"$verbose_hint_preview_command"
-	"--preview-window"
-	"$hint_preview_window"
-	"--preview-label"
-	"Verbose Stream")
-
-instruction_preview_starter_hidden=("--preview"
-	"$instruction_preview_command"
-	"--preview-window"
-	"$instruction_preview_window_hidden")
-
-current_hint_preview_starter_hidden=("--preview"
-	"$current_hint_preview_command"
-	"--preview-window"
-	"$hint_preview_window_hidden"
-	"--preview-label"
-	"Current Stream")
-
-verbose_hint_preview_starter_hidden=("--preview"
-	"$verbose_hint_preview_command"
-	"--preview-window"
-	"$hint_preview_window_hidden"
-	"--preview-label"
-	"Verbose Stream")
-
 set_stream_error="echo \"/usr/bin/tail -F -n 99999999 $purr_error_input_cache $teecmd\" >| $purr_input_stream_cache;"
 set_stream_warning="echo \"/usr/bin/tail -F -n 99999999 $purr_warning_input_cache $teecmd\" >| $purr_input_stream_cache;"
 set_stream_info="echo \"/usr/bin/tail -F -n 99999999 $purr_info_input_cache $teecmd\" >| $purr_input_stream_cache;"

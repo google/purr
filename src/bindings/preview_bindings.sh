@@ -142,3 +142,41 @@ rebind_in_default_command_suite "ctrl-p"
 unbind_in_adb_command_suite "ctrl-p"
 unbind_in_history_command_suite "ctrl-p"
 unbind_in_serial_command_suite "ctrl-p"
+
+instruction_preview_starter=("--preview"
+	"$instruction_preview_command"
+	"--preview-window"
+	"$instruction_preview_window")
+
+current_hint_preview_starter=("--preview"
+	"$current_hint_preview_command"
+	"--preview-window"
+	"$hint_preview_window"
+	"--preview-label"
+	"Current Stream")
+
+verbose_hint_preview_starter=("--preview"
+	"$verbose_hint_preview_command"
+	"--preview-window"
+	"$hint_preview_window"
+	"--preview-label"
+	"Verbose Stream")
+
+instruction_preview_starter_hidden=("--preview"
+	"$instruction_preview_command"
+	"--preview-window"
+	"$instruction_preview_window_hidden")
+
+current_hint_preview_starter_hidden=("--preview"
+	"$current_hint_preview_command"
+	"--preview-window"
+	"$hint_preview_window_hidden"
+	"--preview-label"
+	"Current Stream")
+
+verbose_hint_preview_starter_hidden=("--preview"
+	"$verbose_hint_preview_command"
+	"--preview-window"
+	"$hint_preview_window_hidden"
+	"--preview-label"
+	"Verbose Stream")
