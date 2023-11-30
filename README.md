@@ -1,7 +1,7 @@
 # purr
 
 ### Introduction
-purr is a zsh CLI tool for viewing and searching through Android logcat output. It leverages [fzf](https://github.com/junegunn/fzf) to provide a simple yet powerful user interface, fuzzy-finding capabilities, and much more. 
+purr is a zsh CLI tool for viewing and searching through Android logcat output. It leverages [fzf](https://github.com/junegunn/fzf) to provide a simple yet powerful user interface, fuzzy-finding capabilities, and much more.
 
 ### Motivation
 While Android Studio's logcat viewer is sufficient for most app development, it breaks down when exposed to situations such as terminal-only access or when multiple devices need to be accessed quickly. When performing development on the Android operating system itself, developers revert to using raw `adb logcat` in shell.
@@ -20,24 +20,27 @@ There's even a mode to search through `adb shell` results; no more grepping thro
 
 https://github.com/google/purr/assets/126256142/fb41ec9d-f5a7-43be-98be-9d04ed7b536e
 
+### Installation
+1. Download the latest release version.
+2. Place the script in your PATH.
+3. If you need a copy program, also put the bundled osc52_copy program in your PATH.
+
+### Compilation
+1. Clone the repo
+2. Run "make"
+
 ### Dependencies
 
-`purr` currently functions on Ubuntu Linux and Mac on zsh. It will attempt to source an `fzf` version locally if possible, but requires version `0.40.0` or higher.
+`purr` currently functions on Ubuntu Linux and Mac on `zsh`, and requires a local install of `fzf` with version `0.40.0` or higher, `perl`, and `adb`.
 
-If you do not have `fzf` `0.40.0` or higher locally, `purr` will use bundled `fzf` versions for `linux_x86_64`, `darwin_arm64` or `darwin_amd64` if applicable. If you have a different operating system, you need to download a `0.40.0` or higher `fzf` binary manually.
+Some `purr` commands require a program to copy to clipboard. `purr` will check automatically for installations of `pbcopy`, `xsel`, and `wl-copy`. If the `COPY_PROGRAM` variable is set, purr will attempt to use it. If you are unsure of which copy program to use, a version of OSC52 copy is bundled and can be used if it is added to your path (and your terminal supports OSC52).
 
 Support for Windows may be provided in future, but is not a current priority.
 
-### Installation
-1. Clone the repo
-2. Add the scripts directory to your path
-3. Run using `purr`
-
-
-`purr` comes with two bundled programs:
-
-* `purr_osc52_copy` is a fallback to copy to the system clipboard through SSH and TMUX sessions.
-* `purr_fzf` is a bundled version of fzf `0.40.0` used if a higher version of `fzf` cannot be found.
+* [fzf](https://github.com/junegunn/fzf) [0.40.0+]
+* [zsh](https://github.com/zsh-users/zsh)
+* [adb](https://developer.android.com/studio/command-line/adb)
+* [perl](https://www.perl.org/)
 
 ### Guide
 `purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
@@ -53,8 +56,7 @@ Any other command-line parameters will print the help dialog.
 
 Note that both `-a` and `-f` are read without validation; there is no guarantee that setting either parameter will not break `purr`.
 
-#### Binds
-The following hotkeys can be used:
+### Hotkeys
 
 #### General
 * Escape: Exits `purr`. Ctrl-c and other methods also work, but may take longer, and may not gracefully exit.
@@ -77,6 +79,8 @@ The following hotkeys can be used:
 * Ctrl-s: Enables scroll lock. While in scroll lock mode, your cursor will remain bound to the selected item as long as it remains in the search filter.
 * Ctrl-f: Shorthand for enabling scroll lock and clearing the query. This allows you to go to the surrounding context of a selected item. Scroll lock will end once you move your cursor.
 * Ctrl-j: Changes search modes between Chronological (default) and Relevance. This may be useful for fuzzy queries.
+
+#### Querry
 * Ctrl-alt-s: Adds the selected tag to your query. If the tag already exists in your query, do nothing.
 * Ctrl-alt-d: Adds the inverse of the selected tag to your query. If the tag already exists in your query, remove it instead. Note that the inverse of the selected tag may also match non-tag lines in your log output.
 
@@ -94,13 +98,14 @@ The following hotkeys can be used:
 #### History
 `purr` saves a query string to history once it has not been changed for more than 3.5 seconds. You can use the following hotkeys to access history:
 
+* Ctrl-r: Show the full history menu.
 * Alt-shift-up: Move to the next entry in history.
 * Alt-shift-down: Move to the previous entry in history.
 
 When scrolling through history with alt-shift-up or alt-shift-down, your position in the history will reset once a string has been in the query for 3.5 seconds.
 
 #### Editor
-When you select a single line and press Ctrl-V, `purr` will open the selected line and surrounding context in a text editor. You can specify the text editor through the `$EDITOR` or `$EDITOR_PURR` environment variables; if no text editor is specified, `purr` will use `vim`. 
+When you select a single line and press Ctrl-V, `purr` will open the selected line and surrounding context in a text editor. You can specify the text editor through the `$EDITOR` or `$EDITOR_PURR` environment variables; if no text editor is specified, `purr` will use `vim`.
 
 Note that logcat uses ANSI color codes to display color, so an editor that supports these codes is recommended; for example, [AnsiEsc](https://www.vim.org/scripts/script.php?script_id=302) for `Vim`.
 
@@ -109,11 +114,6 @@ If multiple lines are selected, only those selected lines will be opened in the 
 ### Development
 1. Clone the repo
 2. Open in your favorite IDE/editor
-
-### Dependencies
-* [fzf](https://github.com/junegunn/fzf) - Bundled
-* [zsh](https://github.com/zsh-users/zsh)
-* [adb](https://developer.android.com/studio/command-line/adb)
 
 ### Support
 
