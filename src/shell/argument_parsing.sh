@@ -46,10 +46,12 @@ __purr_get_composite_version() {
 
 # Parse argument flags.
 instruction_flag=true
-while getopts ':a:f:ivVq:' flags; do
+adb_cmd_loc="adb"
+while getopts ':A:a:f:ivVq:' flags; do
 	case $flags in
 	q) query_string="--query=${OPTARG}" ;;
 	a) custom_adb_params=${OPTARG} ;;
+	A) adb_cmd_loc=${OPTARG} ;;
 	f) custom_fzf_params=${OPTARG} ;;
 	i) instruction_flag=false ;;
 	v)

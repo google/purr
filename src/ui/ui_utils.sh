@@ -57,7 +57,7 @@ __purr_set_start_command() {
 		if [ "$cached_query" = "Give me cat facts!" ]; then
 			adb_query_cmd="cat $purr_spc_purpose_cache"
 		else
-			adb_query_cmd="adb -s $serial shell $cached_query"
+			adb_query_cmd="$adb_cmd_loc -s $serial shell $cached_query"
 		fi
 
 		cached_query=""

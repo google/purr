@@ -69,13 +69,13 @@ load_input_stream=(
 		"cat $purr_input_stream_cache | zsh;"
 	"elif /usr/bin/grep -q \"ADB\" $purr_stream_header_cache; then"
 		# If the user runs a command, put the full command as the first line.
-		"if /usr/bin/grep -q \"adb -s\" $purr_input_stream_cache; then"
+		"if /usr/bin/grep -q \"$adb_cmd_loc -s\" $purr_input_stream_cache; then"
 			"echo \"Command: \$(cat $purr_input_stream_cache)\";"
 		"fi;"
 		"cat $purr_input_stream_cache | zsh |& tee;" # Prints all streams to stdout.
 	'else;'
 		$update_serial_cmd
-		'if adb devices | /usr/bin/grep $serial &> /dev/null; then'
+		"if $adb_cmd_loc devices | /usr/bin/grep \$serial &> /dev/null; then"
 			"echo \"\x1b[1;32m  \$serial => \x1b[1;0m\" >| $purr_connection_state_cache;"
 		'else;'
 			"echo \"\x1b[1;31m  \$serial != \x1b[1;0m\" >| $purr_connection_state_cache;"
@@ -144,7 +144,7 @@ stream_serial_msg="\x1b[1;36mSerial\x1b[1;0m\t\t"
 set_stream_history="echo \"cat $purr_history_cache\" >| $purr_input_stream_cache;"
 set_header_history="echo \"$stream_history_msg\" >| $purr_stream_header_cache;"
 
-set_stream_serial="echo \"adb devices | /usr/bin/tail -n +2 |/usr/bin/sed '/^\s*$/d' | /usr/bin/sort | awk '{print \$ 1}'\" >| $purr_input_stream_cache;"
+set_stream_serial="echo \"$adb_cmd_loc devices | /usr/bin/tail -n +2 |/usr/bin/sed '/^\s*$/d' | /usr/bin/sort | awk '{print \$ 1}'\" >| $purr_input_stream_cache;"
 set_header_serial="echo \"$stream_serial_msg\" >| $purr_stream_header_cache;"
 
 hint_preview_window="top,70%,nohidden,wrap,+200/2"

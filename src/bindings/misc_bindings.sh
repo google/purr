@@ -25,7 +25,7 @@ adb_help_cmd=(
 		$update_serial_cmd
 		'query={q};'
 		'for string in "--help" "-h" "help"; do'
-			'adb_help=$( { eval "adb -s $serial shell $query $string" } 2>&1 );'
+			'adb_help=$( { eval' "$adb_cmd_loc" '-s $serial shell $query $string" } 2>&1 );'
 			'ret=$?;'
 			# We are trying best-guesses on what a help prompt might look like here. There isn't
 			# a standard for shell commands, so we're going to try the most common ones, and we

@@ -31,7 +31,7 @@ pick_serial() {
 	while [ -z $adb_devices ]; do
 		__pick_serial_wait
 
-		adb_devices=$(adb devices | tail -n +2 | sed '/^\s*$/d' | sort)
+		adb_devices=$(eval "$adb_cmd_loc devices | tail -n +2 | sed '/^\s*$/d' | sort")
 		device_count=$(echo $adb_devices | /usr/bin/wc -l)
 
 		# Checks how many devices are in a non-connected state.
@@ -59,7 +59,7 @@ pick_serial() {
 	else
 		if command -v rg &>/dev/null; then
 			local stripped_device=$(FZF_DEFAULT_COMMAND="echo \"$adb_devices\"" fzf $fzfpnh "--height=25%" --preview-window=right,50%,wrap \
-				"--preview=adb -s \$(cut -f1 <<< {}) shell getprop | rg '(ro.bootimage.build.date]|ro.product.name|ro.bootimage.build.version.incremental])' | awk -F ']:' '{print \$2}' | sed 's/]//g' | sed 's/\[//g' " | xargs)
+				"--preview=$adb_cmd_loc -s \$(cut -f1 <<< {}) shell getprop | rg '(ro.bootimage.build.date]|ro.product.name|ro.bootimage.build.version.incremental])' | awk -F ']:' '{print \$2}' | sed 's/]//g' | sed 's/\[//g' " | xargs)
 		else
 			local stripped_device=$(FZF_DEFAULT_COMMAND="echo \"$adb_devices\"" fzf $fzfpnh "--height=25%" | xargs)
 		fi
@@ -83,13 +83,15 @@ __pick_serial_wait() {
 	fi
 
 	# See if any devices are immediately connected before printing a connect message.
-	purr_timeout 1 "adb $serial_stmt wait-for-device" 2>/dev/null
+	purr_timeout 1 "$adb_cmd_loc $serial_stmt wait-for-device" 2>/dev/null
 	ret=$?
 
 	# If we can't find any immediate connections, go into a longer waiting period.
 	if [ $ret -eq 124 ] || [ $ret -eq 142 ]; then
 		echo >&2 "Waiting on a device to connect..."
-		adb $serial_stmt wait-for-device
+
+		eval "$adb_cmd_loc $serial_stmt wait-for-device"
+
 		echo >&2 "Device connected."
 	fi
 }

@@ -29,7 +29,7 @@ __purr_check_env() {
 	fi
 
 	# Ensures that the user has adb installed.
-	if ! type adb &>/dev/null; then
+	if ! type $adb_cmd_loc &>/dev/null; then
 		echo >&2 "purr requires ADB to be installed for correct operation. Aborting."
 		exit 52
 	fi

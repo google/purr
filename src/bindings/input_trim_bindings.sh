@@ -19,7 +19,7 @@ wipe_cmd=(
 	'execute-silent('
 		$stop_stream
 		$update_serial_cmd
-		'adb -s $serial logcat -c;'
+		"$adb_cmd_loc -s \$serial logcat -c;"
 		$set_slock_off
 		"echo 'wipe' > $purr_accept_command_cache;"
 		$save_current_query

@@ -87,7 +87,7 @@ __purr_stream_background_file() {
 
 		# If we disconnected, we want to make sure that the device is still offline.
 		if [[ $conn_status = "potential" ]]; then
-			purr_timeout 2 "adb -s $serial wait-for-device" &> /dev/null
+			purr_timeout 2 "$adb_cmd_loc -s $serial wait-for-device" &> /dev/null
 
 			# The device seems to have found itself, we can just reconnect.
 			if [ $? -eq 0 ]; then
@@ -106,7 +106,8 @@ __purr_stream_background_file() {
 				fi
 			fi
 		else # If we aren't in potential mode, we poll for the device until we find it.
-			adb -s $serial wait-for-device &> /dev/null
+			eval "$adb_cmd_loc -s $serial wait-for-device &> /dev/null"
+
 			if [ $? -eq 0 ]; then
 				if [ $conn_status != "unknown" ]; then
 					echo "\x1b[1;36mPURR STATUS: Device Responding.\x1b[1;0m" >> $stream_file
@@ -126,7 +127,7 @@ __purr_stream_background_file() {
 			# Handles trimming logcat input to a specific timestamp.
 			trim_time=$(cat $purr_time_start_cache)
 			if [ -z $trim_time ]; then
-				eval "adb -s $serial logcat -v color $custom_adb_params '$stream_command' >> $stream_file"
+				eval "$adb_cmd_loc -s $serial logcat -v color $custom_adb_params '$stream_command' >> $stream_file"
 			else
 
 				# We don't want the trim time to survive a thread cleanup,
@@ -140,7 +141,7 @@ __purr_stream_background_file() {
 						fi
 					} &
 				fi
-				eval "adb -s $serial logcat -v color $custom_adb_params -T '$trim_time'  '$stream_command' >> $stream_file"
+				eval "$adb_cmd_loc -s $serial logcat -v color $custom_adb_params -T '$trim_time'  '$stream_command' >> $stream_file"
 			fi
 
 			# We've been disconnected, and we're not sure what the state is. We'll
