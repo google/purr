@@ -1,11 +1,14 @@
 OUTDIR?=$(CURDIR)/out
 SRCDIR?=$(CURDIR)/src
 RESDIR?=$(CURDIR)/res
+TESTDIR?=$(CURDIR)/tests
 
 PURRFILE ?=$(OUTDIR)/purr
 PURRFILE_TEMP ?=$(OUTDIR)/purr_temp
 
-all: purr
+ADBMOCKFILE ?=$(OUTDIR)/adb_mock
+
+all: purr adb_mock
 
 .PHONY: purr
 
@@ -69,7 +72,17 @@ purr:
 	mv -f $(PURRFILE_TEMP) $(PURRFILE)
 
 	# Grant execution permission.
-	chmod 777 $(PURRFILE)
+	chmod +rwx $(PURRFILE)
+
+.PHONY: adb_mock
+
+adb_mock:
+	mkdir -p $(OUTDIR)
+	echo "" > $(ADBMOCKFILE)
+
+	cat $(TESTDIR)/mocks/adb_mock.sh >> "$(ADBMOCKFILE)"
+
+	chmod +rwx $(ADBMOCKFILE)
 
 .PHONY: clean
 
