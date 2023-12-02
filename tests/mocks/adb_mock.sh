@@ -20,5 +20,5 @@ elif grep -q "logcat" <<< $@; then
 		11-30 11:51:17.264   397   397 I android.hardware.lights-service.example: Lights setting state for id=1 to color ff161616
 		11-30 11:51:17.281   397   397 I android.hardware.lights-service.example: Lights setting state for id=1 to color ff171717
 	END
-	sleep infinity
+	sleep 9999999
 fi
