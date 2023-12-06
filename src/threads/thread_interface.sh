@@ -31,7 +31,7 @@ __purr_cleanup() {
 	fi
 
 	# Delete all of the cached state files.
-	if [ -d $dir_name ]; then
+	if [ -d $dir_name ] && [[ $delete_dir_flag = "true" ]]; then
 		rm -r $dir_name &>/dev/null
 	fi
 }

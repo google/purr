@@ -43,7 +43,7 @@ Support for Windows may be provided in future, but is not a current priority.
 * [perl](https://www.perl.org/)
 
 ### Guide
-`purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has six command-line parameters:
+`purr` includes a simple tool to help select the device serial from `adb devices`, or can read from the `$ANDROID_SERIAL` environment variable if set. Otherwise, `purr` has the following command-line parameters:
 
 * -a: Sets custom parameters for `adb` that will be used as well as the defaults whenever an input stream is selected.
 * -f: Sets custom parameters for `fzf`. Used on top of default parameters.
@@ -51,6 +51,12 @@ Support for Windows may be provided in future, but is not a current priority.
 * -q: Set the default query string upon `purr` being opened.
 * -v: Shows the `purr` version.
 * -V: Shows a composite version of `purr` and dependencies.
+
+There are also the following special command line parameters that should only be used for testing and debugging:
+
+* -A: Replace all calls to `adb` with the given binary. This can be used in conjunction with the bundled `adb_mock` binary to perform basic testing on purr.
+* -D: Use the given directory to store all generated files instead of the standard /tmp dir.
+* -X: Do not execute `fzf` when reached in the execution loop; return as if `fzf` executed correctly.
 
 Any other command-line parameters will print the help dialog.
 

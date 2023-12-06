@@ -16,7 +16,7 @@
 
 REQUIRED_FZF_VERSION="0.40.0"
 
-VERSION="2.0.1"
+VERSION="2.0.2"
 
 USAGE=("purr"
 	"\n[-q: Sets the default query]"
@@ -47,13 +47,19 @@ __purr_get_composite_version() {
 # Parse argument flags.
 instruction_flag=true
 adb_cmd_loc="adb"
-while getopts ':A:a:f:ivVq:' flags; do
+delete_dir_flag=true
+fzf_exec_flag=true
+while getopts ':XA:D:a:f:ivVq:' flags; do
 	case $flags in
 	q) query_string="--query=${OPTARG}" ;;
 	a) custom_adb_params=${OPTARG} ;;
 	A) adb_cmd_loc=${OPTARG} ;;
+	D)
+		delete_dir_flag=false
+		dir_name=${OPTARG} ;;
 	f) custom_fzf_params=${OPTARG} ;;
 	i) instruction_flag=false ;;
+	X) fzf_exec_flag=false ;;
 	v)
 		echo $VERSION
 		exit 0
