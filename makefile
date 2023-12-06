@@ -7,8 +7,9 @@ PURRFILE ?=$(OUTDIR)/purr
 PURRFILE_TEMP ?=$(OUTDIR)/purr_temp
 
 ADBMOCKFILE ?=$(OUTDIR)/adb_mock
+FILETESTERFILE ?=$(OUTDIR)/file_tester
 
-all: purr adb_mock
+all: purr adb_mock file_tester
 
 .PHONY: purr
 
@@ -83,6 +84,16 @@ adb_mock:
 	cat $(TESTDIR)/mocks/adb_mock.sh >> "$(ADBMOCKFILE)"
 
 	chmod +rwx $(ADBMOCKFILE)
+
+.PHONY: file_tester
+
+file_tester:
+	mkdir -p $(OUTDIR)
+	echo "" > $(FILETESTERFILE)
+
+	cat $(TESTDIR)/tester/validate_files.sh >> "$(FILETESTERFILE)"
+
+	chmod +rwx $(FILETESTERFILE)
 
 .PHONY: clean
 

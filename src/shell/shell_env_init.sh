@@ -14,7 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dir_name=$(mktemp -d /tmp/purr.XXXXXXXXXX)
+if [ -z $dir_name ]; then
+	dir_name=$(mktemp -d /tmp/purr.XXXXXXXXXX)
+else
+	mkdir -p $dir_name
+fi
 
 # Run cleanup if we exit abnormally.
 trap "__purr_cleanup $dir_name" INT TERM

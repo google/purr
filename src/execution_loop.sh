@@ -31,8 +31,11 @@ while true; do
 
 	__purr_set_start_preview
 
-	# Starts and runs the actual fzf process.
-	if [ ! -z $cached_query ]; then
+	if [[ "$fzf_exec_flag" = "false" ]]; then	# Don't exec fzf if in a testing session.
+		sleep 5
+		accepted=""
+		ret=$?
+	elif [ ! -z $cached_query ]; then 	# Starts and runs the actual fzf process.
 		accepted=$(FZF_DEFAULT_COMMAND="$load_input_stream" fzf $starter_preview_command $fzfp $fzf_prompt $bind_commands $start_command --query=$cached_query)
 		ret=$?
 	else
