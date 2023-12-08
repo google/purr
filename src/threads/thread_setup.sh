@@ -70,9 +70,9 @@ __purr_create_files() {
 	purr_preview_command_cache="$dir_name/preview-command-cache.purr"
 	/usr/bin/touch $purr_preview_command_cache
 
-	# File to communicate with the background handler.
-	purr_background_handler_cache="$dir_name/background-handler-IO.purr"
-	/usr/bin/touch $purr_background_handler_cache
+	# Pipe to communicate with the background handler.
+	thread_io_pipe=$dir_name/thread_io_pipe
+	mkfifo $thread_io_pipe
 
 	# File to communicate what the accept command intent was.
 	purr_accept_command_cache="$dir_name/purr_accept_command_cache.purr"

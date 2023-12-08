@@ -27,13 +27,6 @@ validate_runtime_purr_files() {
 	grep -q -- "Verbose" $dir_name/stream-header.purr
 	echo "Input stream is verbose."
 
-	# Is the handler processing IO?
-	if [ -s $dir_name/background-handler-IO.purr ]; then
-		return 1
-	else
-		echo "Thread IO working."
-	fi
-
 	# Did we start on the instruction preview? And it is visible?
 	grep -q -- "instruction" $dir_name/preview-command-cache.purr
 	grep -q -- "nohidden" $dir_name/preview-visibility-cache.purr
@@ -56,10 +49,6 @@ validate_runtime_purr_files() {
 
 validate_exit_time_purr_files() {
 	dir_name=$1
-
-	# Has the handler been told to clean up?
-	grep -q -- "purr_thread_cleanup" $dir_name/background-handler-IO.purr
-	echo "Threads are in cleanup."
 
 	# Did the handler actually do clean up?
 	if [ ! -f $dir_name/verbose-input-cache.purr ]; then

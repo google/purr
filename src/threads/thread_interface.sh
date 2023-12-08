@@ -15,19 +15,19 @@
 # limitations under the License.
 
 __purr_start_stream() {
-	echo "$PURR_THREAD_START" >>$purr_background_handler_cache
+	echo "$PURR_THREAD_START" >$thread_io_pipe
 }
 
 __purr_thread_stop_stream() {
-	echo "$PURR_THREAD_STOP" >>$purr_background_handler_cache
+	echo "$PURR_THREAD_STOP" >$thread_io_pipe
 }
 
 __purr_cleanup() {
 	local dir_name=$1
 
 	# Send a message to the background threads that they need to die.
-	if [ -f $purr_background_handler_cache ]; then
-		echo "$PURR_THREAD_CLEANUP" >>$purr_background_handler_cache
+	if [ -p $thread_io_pipe ]; then
+		echo "$PURR_THREAD_CLEANUP" >$thread_io_pipe
 	fi
 
 	# Delete all of the cached state files.

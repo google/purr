@@ -150,5 +150,5 @@ set_header_serial="echo \"$stream_serial_msg\" >| $purr_stream_header_cache;"
 hint_preview_window="top,70%,nohidden,wrap,+200/2"
 hint_preview_window_hidden="top,70%,hidden,wrap,+200/2"
 
-start_stream="echo \"$PURR_THREAD_START\" >> $purr_background_handler_cache;"
-stop_stream="echo \"$PURR_THREAD_STOP\" >> $purr_background_handler_cache;"
+start_stream="echo \"$PURR_THREAD_START\" >$thread_io_pipe;"
+stop_stream="echo \"$PURR_THREAD_STOP\" >$thread_io_pipe;"

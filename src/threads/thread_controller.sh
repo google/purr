@@ -19,20 +19,22 @@ PURR_THREAD_START="purr_thread_start"
 PURR_THREAD_STOP="purr_thread_stop"
 
 # The background handler is responsible for starting and killing
-# the stream threads. It uses the purr_background_handler_cache
+# the stream threads. It uses the thread_io_pipe
 # as a one-way communication between the core process and itself,
 # and then handles asynchronous processes related to the stream threads.
 __purr_background_handler() {
 	__purr_start_streams
 
-	while read line; do
-		if [ $line = "$PURR_THREAD_STOP" ]; then
-			__purr_cleanup_streams
-		elif [ $line = "$PURR_THREAD_START" ]; then
-			__purr_start_streams
-		elif [ $line = "$PURR_THREAD_CLEANUP" ]; then
-			__purr_cleanup_streams
-			exit 0
+	while true; do
+		if read line <$thread_io_pipe; then
+			if [ $line = "$PURR_THREAD_STOP" ]; then
+				__purr_cleanup_streams
+			elif [ $line = "$PURR_THREAD_START" ]; then
+				__purr_start_streams
+			elif [ $line = "$PURR_THREAD_CLEANUP" ]; then
+				__purr_cleanup_streams
+				exit 0
+			fi
 		fi
-	done < <(/usr/bin/tail -f $purr_background_handler_cache 2>/dev/null)
+	done
 }
