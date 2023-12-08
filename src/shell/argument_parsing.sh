@@ -16,7 +16,7 @@
 
 REQUIRED_FZF_VERSION="0.40.0"
 
-VERSION="2.0.3"
+VERSION="2.0.4"
 
 USAGE=("purr"
 	"\n[-q: Sets the default query]"
