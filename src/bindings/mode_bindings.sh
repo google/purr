@@ -19,19 +19,29 @@ unique_cmd=(
 	'execute-silent('
 		"if $is_unique_on; then"
 			$set_unique_off
-			"sed -i 's/verbose-unique/verbose/g' $purr_input_stream_cache;"
-			"sed -i 's/info-unique/info/g' $purr_input_stream_cache;"
-			"sed -i 's/warning-unique/warning/g' $purr_input_stream_cache;"
-			"sed -i 's/error-unique/error/g' $purr_input_stream_cache;"
+			"if grep -q 'verbose-unique' $purr_input_stream_cache; then"
+				$set_stream_verbose
+			"elif grep -q 'info-unique' $purr_input_stream_cache; then"
+				$set_stream_info
+			"elif grep -q 'warning-unique' $purr_input_stream_cache; then"
+				$set_stream_warning
+			"elif grep -q 'error-unique' $purr_input_stream_cache; then"
+				$set_stream_error
+			"fi;"
 		"else;"
 			$set_unique_on
-			"sed -i 's/verbose/verbose-unique/g' $purr_input_stream_cache;"
-			"sed -i 's/info/info-unique/g' $purr_input_stream_cache;"
-			"sed -i 's/warning/warning-unique/g' $purr_input_stream_cache;"
-			"sed -i 's/error/error-unique/g' $purr_input_stream_cache;"
+			"if grep -q 'verbose' $purr_input_stream_cache; then"
+				$set_stream_verbose_unique
+			"elif grep -q 'info' $purr_input_stream_cache; then"
+				$set_stream_info_unique
+			"elif grep -q 'warning' $purr_input_stream_cache; then"
+				$set_stream_warning_unique
+			"elif grep -q 'error' $purr_input_stream_cache; then"
+				$set_stream_error_unique
+			"fi;"
 		"fi;"
 	')+reload('
-		$inject_emppty_line
+		$inject_empty_line
 		$load_input_stream
 	")+transform-header("
 		$load_generic_header
