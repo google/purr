@@ -176,7 +176,14 @@ __purr_stream_unique_file() {
 		exit
 	fi
 
-	tail -s 0.1 -F --lines=+0 -- $stream_input_file 2> /dev/null | while read -r line; do
+	# MacOS doesn't have a -s parameter for tail, so unique mode breaks...
+	if [ "$(uname)" = "Darwin" ]; then
+		tail_sleep_interval=""
+	else
+		tail_sleep_interval="-s 0.1"
+	fi
+
+	tail $tail_sleep_interval -F --lines=+0 -- $stream_input_file 2> /dev/null | while read -r line; do
 		trimmed_line_cksum=$(echo $line | awk '{$1=$1};1' | cut -d' ' -f5- -- | cksum | cut -d' ' -f1)
 		if command -v rg &>/dev/null; then
 			if ! rg -q "$trimmed_line_cksum" $stream_checksum_file 2> /dev/null; then
