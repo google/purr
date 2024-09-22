@@ -70,7 +70,8 @@ purr:
 	cat $(SRCDIR)/execution_loop.sh >> "$(PURRFILE_TEMP)"
 
 	# Remove comments/shebangs.
-	sed -i -e '/^[ \t]*#/d' "$(PURRFILE_TEMP)"
+	sed -e '/^[ \t]*#/d' "$(PURRFILE_TEMP)" > $(PURRFILE)
+	mv $(PURRFILE) "$(PURRFILE_TEMP)"
 
 	# Add one shebang and the copyright notice.
 	# We need a temp file since cat can't do it in-place.
@@ -92,7 +93,8 @@ adb_mock:
 	cat $(TESTDIR)/mocks/adb_mock.sh >> "$(ADBMOCKFILE_TEMP)"
 
 	# Remove comments/shebangs.
-	sed -i -e '/^[ \t]*#/d' "$(ADBMOCKFILE_TEMP)"
+	sed -e '/^[ \t]*#/d' "$(ADBMOCKFILE_TEMP)" > $(ADBMOCKFILE)
+	mv $(ADBMOCKFILE) "$(ADBMOCKFILE_TEMP)"
 
 	# Add one shebang and the copyright notice.
 	# We need a temp file since cat can't do it in-place.
@@ -114,7 +116,8 @@ file_tester:
 	cat $(TESTDIR)/validators/file_validator.sh >> "$(FILETESTERFILE_TEMP)"
 
 	# Remove comments/shebangs.
-	sed -i -e '/^[ \t]*#/d' "$(FILETESTERFILE_TEMP)"
+	sed -e '/^[ \t]*#/d' "$(FILETESTERFILE_TEMP)" > $(FILETESTERFILE)
+	mv $(FILETESTERFILE) "$(FILETESTERFILE_TEMP)"
 
 	# Add one shebang and the copyright notice.
 	# We need a temp file since cat can't do it in-place.
