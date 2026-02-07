@@ -21,7 +21,7 @@ else
 fi
 
 # Run cleanup if we exit abnormally.
-trap "__purr_cleanup $dir_name" INT TERM
+trap '__purr_cleanup "$dir_name"' INT TERM
 
 # Tell fzf to run commands in zsh.
 SHELL=$(which zsh)
@@ -32,7 +32,7 @@ __purr_create_files $dir_name
 # If we are in TMUX or SSH, $TTY might not be the TTY we want to route to.
 if [ -n "${TMUX-}" ]; then
 	pane_active_tty=$(tmux list-panes -F "#{pane_active} #{pane_tty}" | awk '$1=="1" { print $2 }')
-	if [ ! -z $SSH_TTY ]; then
+	if [ -n "$SSH_TTY" ]; then
 		target_tty="${SSH_TTY:-$pane_active_tty}"
 	else
 		target_tty="${TTY:-$pane_active_tty}"

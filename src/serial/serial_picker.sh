@@ -19,24 +19,24 @@
 pick_serial() {
 
 	# Checks if we want to return just the $ANDROID_SERIAL serial.
-	if [ ! -z $ANDROID_SERIAL ]; then
-		__pick_serial_wait $ANDROID_SERIAL
-		echo $ANDROID_SERIAL
+	if [ -n "$ANDROID_SERIAL" ]; then
+		__pick_serial_wait "$ANDROID_SERIAL"
+		echo "$ANDROID_SERIAL"
 		return
 	fi
 
 	# Check if any ADB devices are found.
 	local adb_devices=""
 	local device_count=""
-	while [ -z $adb_devices ]; do
+	while [ -z "$adb_devices" ]; do
 		__pick_serial_wait
 
 		adb_devices=$(eval "$adb_cmd_loc devices | tail -n +2 | sed '/^\s*$/d' | sort")
-		device_count=$(echo $adb_devices | wc -l)
+		device_count=$(echo "$adb_devices" | wc -l)
 
 		# Checks how many devices are in a non-connected state.
-		local disconnected_devices=$(grep ".*offline.*" <<<$adb_devices | sort)
-		local disconnected_count=$(grep -c ".*offline.*" <<<$adb_devices | sort)
+		local disconnected_devices=$(grep ".*offline.*" <<<"$adb_devices" | sort)
+		local disconnected_count=$(grep -c ".*offline.*" <<<"$adb_devices" | sort)
 
 		# Checks whether there are any devices left that can be connected to.
 		if [ $disconnected_count -eq $device_count ]; then
@@ -46,10 +46,10 @@ pick_serial() {
 
 			adb_devices=""
 			device_count=""
-		elif [ $disconnected_count -ne 0 ]; then
+		elif [ "$disconnected_count" -ne 0 ]; then
 			echo >&2 "Skipped offline devices:"
-			echo >&2 $disconnected_devices
-			adb_devices=$(grep -v ".*offline.*" <<<$adb_devices | sort)
+			echo >&2 "$disconnected_devices"
+			adb_devices=$(grep -v ".*offline.*" <<<"$adb_devices" | sort)
 		fi
 	done
 
@@ -66,19 +66,19 @@ pick_serial() {
 	fi
 
 	# If the user exits fzf without picking.
-	if [ -z $stripped_device ]; then
+	if [ -z "$stripped_device" ]; then
 		echo >&2 "No serial number selected."
 		exit 18
 	fi
 
 	# Cuts the serial down to just the number.
-	echo "$(cut -d' ' -f1 <<<$stripped_device)" # Grab the serial from selection.
+	echo "$(cut -d' ' -f1 <<<"$stripped_device")" # Grab the serial from selection.
 }
 
 # If we know which serial to look for, or we can't see any, we need to wait. ADB device connections
 # can be fickle, and ADB sometimes reports devices before it really should.
 __pick_serial_wait() {
-	if [ ! -z $1 ]; then
+	if [ -n "$1" ]; then
 		local serial_stmt="-s $1"
 	fi
 

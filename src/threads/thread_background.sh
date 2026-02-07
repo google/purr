@@ -136,8 +136,8 @@ __purr_stream_background_file() {
 				if [ $am_verbose = "true" ]; then
 					{
 						sleep 1.5
-						if [ -f $purr_time_start_cache ]; then
-							echo "" > $purr_time_start_cache &> /dev/null
+						if [ -f "$purr_time_start_cache" ]; then
+: > "$purr_time_start_cache" 2>/dev/null
 						fi
 					} &
 				fi
@@ -146,9 +146,9 @@ __purr_stream_background_file() {
 
 			# We've been disconnected, and we're not sure what the state is. We'll
 			# grab the last message sent so we can restart at the same timestamp.
-			if [ $am_verbose = "true" ]; then
-				trimmed_time=$(echo $(tail -1 $stream_file) | cut -d' ' -f1-2 | sed -e 's/\x1b\[[0-9;]*m//g');
-				echo $trimmed_time > $purr_time_start_cache;
+			if [ "$am_verbose" = "true" ]; then
+				trimmed_time=$(echo "$(tail -n 1 "$stream_file")" | cut -d' ' -f1-2 | sed -e 's/\x1b\[[0-9;]*m//g')
+				echo "$trimmed_time" > "$purr_time_start_cache"
 			fi
 
 			echo "\x1b[1;36mPURR STATUS: Potential Connection Lost.\x1b[1;0m" >> $stream_file

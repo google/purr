@@ -36,7 +36,7 @@ __purr_check_env() {
 
 	# Ensures that the user has fzf 0.40.0 or later installed.
 	autoload is-at-least
-	if ! command -v fzf &>/dev/null || ! is-at-least $REQUIRED_FZF_VERSION $(fzf --version | cut -d' ' -f1); then
+	if ! command -v fzf &>/dev/null || ! is-at-least "$REQUIRED_FZF_VERSION" "$(fzf --version | cut -d' ' -f1)"; then
 		echo >&2 "purr requires fzf 0.40.0 or higher to be installed for correct operation. Aborting."
 		exit 53
 	fi

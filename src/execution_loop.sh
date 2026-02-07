@@ -21,8 +21,8 @@
 while true; do
 
 	# Grabs the last query from the user before fzf exited.
-	cached_query="$(cat $purr_query_cache)"
-	"" >$purr_query_cache &>/dev/null
+	cached_query="$(cat "$purr_query_cache")"
+: > "$purr_query_cache" 2>/dev/null
 
 	__purr_update_serial
 	__purr_update_prompt
@@ -56,8 +56,8 @@ while true; do
 	purr_timeout 1 "wait_for_file $purr_accept_command_cache"
 
 	# We'll use this to figure out the user input before fzf stopped.
-	accept_cmd=$(cat $purr_accept_command_cache)
-	"" >$purr_accept_command_cache &>/dev/null
+	accept_cmd=$(cat "$purr_accept_command_cache")
+: > "$purr_accept_command_cache" 2>/dev/null
 
 	if [ "$accept_cmd" = "wipe" ] || [ "$accept_cmd" = "serial" ] || [ "$accept_cmd" = "trim" ]; then
 		__wait_for_input_streams

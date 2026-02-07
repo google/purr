@@ -71,12 +71,12 @@ __purr_set_start_command() {
 __purr_start_editor() {
 
 	# If there's nothing to edit, we just move on.
-	if [ -z $accepted ]; then
-		continue
+	if [ -z "$accepted" ]; then
+		return
 	fi
 
 	# Grab the context around the accepted line.
-	if [ $(echo $accepted | wc -l) -eq 1 ]; then
+	if [ $(echo "$accepted" | wc -l) -eq 1 ]; then
 		if command -v rg &>/dev/null; then
 			rg --color=always -F "$accepted" $purr_input_cache -C 500 >$purr_editor_input_cache
 		else
@@ -87,14 +87,14 @@ __purr_start_editor() {
 	fi
 
 	# Preferentially grab the editor from $EDITOR_PURR, then $EDITOR, then just use vim.
-	if [ $EDITOR_PURR ]; then
-		eval "$EDITOR_PURR $purr_editor_input_cache"
-	elif [ $EDITOR ]; then
-		eval "$EDITOR $purr_editor_input_cache"
+	if [ -n "$EDITOR_PURR" ]; then
+		eval "$EDITOR_PURR \"$purr_editor_input_cache\""
+	elif [ -n "$EDITOR" ]; then
+		eval "$EDITOR \"$purr_editor_input_cache\""
 	else
 		echo "No editor detected. Overriding to vim."
 		echo "Purr will read from \$EDITOR_PURR, then \$EDITOR, then default to vim."
-		vim +501 $purr_editor_input_cache
+		vim +501 "$purr_editor_input_cache"
 	fi
 }
 
