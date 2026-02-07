@@ -21,6 +21,13 @@ There's even a mode to search through `adb shell` results; no more grepping thro
 https://github.com/google/purr/assets/126256142/fb41ec9d-f5a7-43be-98be-9d04ed7b536e
 
 ### Installation
+
+#### Homebrew
+```
+brew install purr
+```
+
+#### Manual
 1. Download the latest release version.
 2. Place the script in your PATH.
 3. If you need a copy program, also put the bundled osc52_copy program in your PATH.
