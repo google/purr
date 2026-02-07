@@ -15,11 +15,11 @@
 # limitations under the License.
 
 __purr_start_stream() {
-	echo "$PURR_THREAD_START" >$thread_io_pipe
+	echo "$PURR_THREAD_START" 1<>$thread_io_pipe
 }
 
 __purr_thread_stop_stream() {
-	echo "$PURR_THREAD_STOP" >$thread_io_pipe
+	echo "$PURR_THREAD_STOP" 1<>$thread_io_pipe
 }
 
 __purr_cleanup() {
@@ -27,7 +27,8 @@ __purr_cleanup() {
 
 	# Send a message to the background threads that they need to die.
 	if [ -p $thread_io_pipe ]; then
-		echo "$PURR_THREAD_CLEANUP" >$thread_io_pipe
+		# Use <> to open read/write to avoid blocking if no reader is attached yet
+		echo "$PURR_THREAD_CLEANUP" 1<>$thread_io_pipe
 	fi
 
 	# Delete all of the cached state files.
